@@ -1,7 +1,7 @@
 #ifndef __ADAFRUIT_SIMPLE_AHRS_H__
 #define __ADAFRUIT_SIMPLE_AHRS_H__
 
-#include <Adafruit_Sensor.h>
+#include "Adafruit_Sensor.h"
 #include "Adafruit_Sensor_Set.h"
 
 // Simple sensor fusion AHRS using an accelerometer and magnetometer.

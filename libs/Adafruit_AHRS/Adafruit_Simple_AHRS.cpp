@@ -1,5 +1,7 @@
 #include "Adafruit_Simple_AHRS.h"
 
+#include <cmath>
+
 // Create a simple AHRS from an explicit accelerometer and magnetometer sensor.
 Adafruit_Simple_AHRS::Adafruit_Simple_AHRS(Adafruit_Sensor* accelerometer, Adafruit_Sensor* magnetometer):
   _accel(accelerometer),
