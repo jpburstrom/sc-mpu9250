@@ -31,7 +31,7 @@ void LinuxDuino::delay(uint64_t mill) {
 
 LinuxDuino::Wire::Wire(int num) {
   char filename[20];
-  snprintf(filename, 19, "dev/i2c-%d", num);
+  snprintf(filename, 19, "/dev/i2c-%d", num);
 
   _file = open(filename, O_RDWR);
   if (_file < 0) {
