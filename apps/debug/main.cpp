@@ -21,7 +21,11 @@ int main(int argc, char** argv) {
   sigaction(SIGINT, &sigIntHandler, NULL);
 
   Adafruit_LSM9DS0 lsm;
-  lsm.begin();
+  if (!lsm.begin()) {
+    std::cerr <<  "sensor init failed!" << std::endl;
+    return 1;
+  }
+
   lsm.setupAccel(lsm.LSM9DS0_ACCELRANGE_2G);
   lsm.setupMag(lsm.LSM9DS0_MAGGAIN_2GAUSS);
   lsm.setupGyro(lsm.LSM9DS0_GYROSCALE_245DPS);
