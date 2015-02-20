@@ -54,12 +54,13 @@ void LinuxDuino::Wire::beginTransmission(byte address) {
 }
 
 void LinuxDuino::Wire::write(byte reg, byte value) {
-  if (i2c_smbus_write_byte_data(_file, value, reg) < 0) {
+  if (i2c_smbus_write_byte_data(_file, reg, value) < 0) {
     std::cerr << "failed to write to i2c register" << reg << std::endl;
   }
 }
 
 uint8_t LinuxDuino::Wire::read(byte reg) {
+  return i2c_smbus_read_byte_data(_file, reg);
 }
 
 void LinuxDuino::Wire::endTransmission() { 
@@ -67,7 +68,7 @@ void LinuxDuino::Wire::endTransmission() {
 
 void LinuxDuino::Wire::requestFrom(byte reg, byte* data, byte len) { 
   auto count = i2c_smbus_read_i2c_block_data(_file, reg, len, data);
-  if (count < len) {
+  if (count != len) {
     std::cerr << "missing data from block read. wanted " << len << " got " << count << std::endl;
   }
 }
