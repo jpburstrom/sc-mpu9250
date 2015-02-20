@@ -1,3 +1,7 @@
 .*.swp
 build/
 *.a
+
+# executables
+/debug
+/ahrs_debug
