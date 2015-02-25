@@ -1,3 +1,0 @@
-{
-  "link-local": ["Adafruit_AHRS", "Adafruit_Sensor", "Adafruit_LSM9DS0_Library", "LinuxDuino"]
-}

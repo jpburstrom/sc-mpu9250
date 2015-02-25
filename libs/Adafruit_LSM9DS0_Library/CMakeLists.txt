@@ -1,0 +1,3 @@
+
+add_library(Adafruit_LSM9DS0 Adafruit_LSM9DS0.cpp)
+add_dependencies(Adafruit_LSM9DS0 Adafruit_Sensor)

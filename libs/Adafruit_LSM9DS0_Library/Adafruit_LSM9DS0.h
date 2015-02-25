@@ -15,8 +15,8 @@
 #ifndef __LSM9DS0_H__
 #define __LSM9DS0_H__
 
-#include "Adafruit_Sensor.h"
-#include "LinuxDuino.h"
+#include <Adafruit_Sensor.h>
+#include <LinuxDuino.h>
 
 using namespace LinuxDuino;
 

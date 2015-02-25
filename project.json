@@ -1,5 +1,0 @@
-{
-  "cpp-std": "11",
-  "debug": true,
-  "warn": ["all"]
-}
