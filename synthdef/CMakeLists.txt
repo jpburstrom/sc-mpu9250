@@ -1,0 +1,12 @@
+add_library(AHRS MODULE AHRS_UGen.cpp)
+target_link_libraries(AHRS Adafruit_AHRS Adafruit_LSM9DS0 Adafruit_Sensor LinuxDuino)
+
+set(SUPERCOLLIDER_INCLUDE /usr/local/include/SuperCollider)
+include_directories(AHRS ${SUPERCOLLIDER_INCLUDE}/plugin_interface ${SUPERCOLLIDER_INCLUDE}/common)
+
+
+set(SUPERCOLLIDER_EXTENSION_DIR ~/supercollider/)
+
+
+MESSAGE( STATUS "SUPERCOLLIDER_EXTENSION_DIR  " ${SUPERCOLLIDER_EXTENSION_DIR})
+INSTALL(FILES AHRS.sc ${CMAKE_CURRENT_BINARY_DIR}/AHRS DESTINATION ${SUPERCOLLIDER_EXTENSION_DIR})

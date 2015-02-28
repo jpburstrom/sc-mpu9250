@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 2.8)
 
 project (Nime)
 
+set(CMAKE_POSITION_INDEPENDENT_CODE True)
+
 # hack to get c++11 + warnings
 add_definitions(-std=c++11 -Wall)
 
@@ -14,3 +16,5 @@ add_subdirectory(libs/Adafruit_AHRS)
 
 add_subdirectory(apps/debug)
 add_subdirectory(apps/ahrs_debug)
+
+add_subdirectory(synthdef)
