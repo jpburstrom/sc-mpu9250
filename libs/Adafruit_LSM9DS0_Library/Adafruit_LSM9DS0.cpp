@@ -15,6 +15,8 @@
 #include "Adafruit_LSM9DS0.h"
 
 
+using namespace LinuxDuino;
+
 
 /***************************************************************************
  CONSTRUCTOR

@@ -1,9 +1,9 @@
-#include <SC_PlugIn.h>
-
 #include "Adafruit_Sensor.h"
 #include "Adafruit_LSM9DS0.h"
 #include "Adafruit_Simple_AHRS.h"
 
+
+#include <SC_PlugIn.h>
 
 // written with reference to the chapter "Writing Unit Generator Plug-ins" in The SuperCollider Book
 
@@ -28,29 +28,31 @@ public:
       return AHRS_Singleton::instance;
     }
 
-    public float read(int which) {
+    float read(int which) {
       // TODO: update this in a thread or something..
-      ahrs.getOrientation(&orientation);
+      ahrs->getOrientation(&orientation);
 
       
       switch (which) {
-        case ROLL:
+        case AHRS::ROLL:
           return orientation.roll;
-        case PITCH:
+        case AHRS::PITCH:
           return orientation.pitch;
-        case HEADING:
+        case AHRS::HEADING:
+        default:
           return orientation.heading;
       }
     }
 
 private:
-    static AHRS_Singleton* instance = nullptr;
+    static AHRS_Singleton* instance;
+
     Adafruit_LSM9DS0 lsm;
     sensors_vec_t   orientation;
     Adafruit_Simple_AHRS* ahrs;
 
     AHRS_Singleton()  {
-      lsm.begin()
+      lsm.begin();
       ahrs = new Adafruit_Simple_AHRS(&lsm.getAccel(), &lsm.getMag());
       orientation.roll = 0;
       orientation.pitch = 0;
@@ -61,6 +63,8 @@ private:
       delete ahrs;
     }
 };
+
+AHRS_Singleton* AHRS_Singleton::instance = nullptr;
 
 
 
@@ -81,7 +85,7 @@ void AHRS_Next(AHRS *unit, int numSamples) {
   float *out = OUT(0);
 
   // TODO: this should probably be done differently
-  float value = AHRS_Singleton.get().read(unit->channel);
+  float value = AHRS_Singleton::get()->read(unit->channel);
 
   for (int i = 0; i < FULLBUFLENGTH; i++) {
     out[i] = value;

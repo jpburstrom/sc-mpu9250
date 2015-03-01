@@ -42,6 +42,7 @@ int main(int argc, char** argv) {
         << " h:" << orientation.heading << " }" << std::endl;
     }
 
-    delay(100);
+    LinuxDuino::delay(100);
+
   }
 }

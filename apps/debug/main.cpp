@@ -43,6 +43,6 @@ int main(int argc, char** argv) {
        << " Z: " << lsm.gyroData.z
        << "\t Temp: "  << lsm.temperature << std::endl;
 
-    delay(200);
+    LinuxDuino::delay(200);
   }
 }

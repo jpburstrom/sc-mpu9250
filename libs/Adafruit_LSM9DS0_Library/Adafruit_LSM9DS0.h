@@ -18,8 +18,6 @@
 #include <Adafruit_Sensor.h>
 #include <LinuxDuino.h>
 
-using namespace LinuxDuino;
-
 #define LSM9DS0_ADDRESS_ACCELMAG           (0x1D)         // 3B >> 1 = 7bit default
 #define LSM9DS0_ADDRESS_GYRO               (0x6B)         // D6 >> 1 = 7bit default
 #define LSM9DS0_XM_ID                      (0b01001001)
@@ -208,7 +206,7 @@ class Adafruit_LSM9DS0
         /* Take new reading. */
         (_parent->*_readFunc)();
         /* Fill in event data. */
-        (_parent->*_eventFunc)(event, millis());
+        (_parent->*_eventFunc)(event, LinuxDuino::millis());
       }
       virtual void getSensor(sensor_t* sensor) {
         /* Fill in sensor metadata. */
@@ -242,7 +240,7 @@ class Adafruit_LSM9DS0
     Sensor _magSensor;
     Sensor _gyroSensor;
     Sensor _tempSensor;
-    Wire* _wire;
+    LinuxDuino::Wire* _wire;
 
     /* Functions to get individual sensor measurements and metadata. */
     /* Note that these functions will NOT update the sensor state before getting */
