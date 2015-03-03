@@ -16,10 +16,17 @@
 #include <unistd.h>
 #include <fcntl.h>
 
+#include <thread>
+#include <chrono>
+
+
+struct GPIOThread;
 
 struct GPIO : public Unit {
   int pin;
   int fd;
+  float value;
+  GPIOThread* thread;
 };
 
 
@@ -31,6 +38,42 @@ extern "C" {
   void GPIO_next(GPIO *unit, int numSamples);
 }
 
+struct GPIOThread {
+  std::thread* thread;
+  bool running;
+
+
+  void join() {
+    running = false;
+    thread->join();
+    delete thread;
+  }
+
+  void run(GPIO* unit) {
+    running = true;
+    thread = new std::thread(&GPIOThread::loop, this, unit);
+  }
+
+  void loop(GPIO* unit) {
+    while (running) {
+        char c = 'a';
+        lseek(unit->fd, 0, SEEK_SET);
+        auto err = read(unit->fd, &c, 1);
+        if (err != 1) {
+          std::cout << "c : " << c << "err: " << err << " errno: " << errno << std::endl;
+        }
+
+        float value = 1;
+        if (c == '0') {
+          value = 0;
+        }
+
+        unit->value = 1 + value * -2;
+        // HIGH -> -1, LOW = 1 (this is how triggers work in SC)
+        std::this_thread::sleep_for(std::chrono::milliseconds(20));
+      }
+  }
+};
 
 
 static InterfaceTable *ft;
@@ -59,11 +102,16 @@ void GPIO_Ctor(GPIO *unit) {
       exit(1);
     }
 
+    unit->value = 0;
+    unit->thread = new GPIOThread();
+    unit->thread->run(unit);
+
     SETCALC(GPIO_next);
     GPIO_next(unit, 1);
 }
 
 void GPIO_Dtor(GPIO *unit) {
+    unit->thread->join();
     close(unit->fd);
 }
 
@@ -71,23 +119,7 @@ void GPIO_Dtor(GPIO *unit) {
 void GPIO_next(GPIO *unit, int numSamples) {
   float* out = OUT(0);
 
-  char c = 'a';
-  lseek(unit->fd, 0, SEEK_SET);
-  auto err = read(unit->fd, &c, 1);
-  if (err != 1) {
-    std::cout << "c : " << c << "err: " << err << " errno: " << errno << std::endl;
-  }
-
-  float value = 1;
-  if (c == '0') {
-    value = 0;
-  }
-  value *= 1 + value * -2;
-  // float value = digitalRead(unit->pin) * -2 + 1;
-  // float value = digitalRead(unit->pin);* -2 + 1;
-  // HIGH -> -1, LOW = 1 (this is how triggers work in SC)
-
   for (int i = 0; i < numSamples ; i++) {
-    out[i] = value;
+    out[i] = unit->value;
   }
 }

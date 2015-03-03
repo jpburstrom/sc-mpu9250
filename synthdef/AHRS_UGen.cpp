@@ -7,6 +7,9 @@
 
 #include <SC_PlugIn.h>
 
+#include <thread>
+
+
 // written with reference to the chapter "Writing Unit Generator Plug-ins" in The SuperCollider Book
 // and also http://doc.sccode.org/Guides/WritingUGens.html accessed March 2, 2015
 
@@ -46,15 +49,25 @@ public:
     static AHRS_Singleton* get() {
       if (AHRS_Singleton::instance == nullptr) {
         AHRS_Singleton::instance = new AHRS_Singleton();
+        AHRS_Singleton::thread = new std::thread(AHRS_Singleton::thready);
       }
       return AHRS_Singleton::instance;
     }
 
-    float read(int which) {
-      // TODO: update this in a thread or something..
-      ahrs->getOrientation(&orientation);
+    static void thready() {
+      while (AHRS_Singleton::running) {
+        AHRS_Singleton::get()->update();
+        std::this_thread::yield();
+      }
+    }
 
-      
+    static bool running;
+
+    void update() {
+      ahrs->getOrientation(&orientation);
+    }
+
+    float read(int which) {
       switch (which) {
         case AHRS::ROLL:
           return orientation.roll;
@@ -68,6 +81,7 @@ public:
 
 private:
     static AHRS_Singleton* instance;
+    static std::thread* thread;
 
     Adafruit_LSM9DS0 lsm;
     sensors_vec_t   orientation;
@@ -89,6 +103,8 @@ private:
 };
 
 AHRS_Singleton* AHRS_Singleton::instance = nullptr;
+std::thread* AHRS_Singleton::thread = nullptr;
+bool AHRS_Singleton::running = true;
 
 
 void AHRS_Ctor(AHRS *unit) {
