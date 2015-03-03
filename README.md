@@ -11,11 +11,25 @@ This project will build:
 
     mkdir build
     cd build
-    cmake ../
-    make
+    cmake -DCMAKE_BUILD_TYPE=Release ../
+    make install
 
 
 ### to run:
 
     sudo ./build/apps/ahrs_debug/ahrs_debug
     sudo ./build/apps/debug/debug
+    
+
+
+### to NIME
+
+
+After installing, you can run  scripts/start_all.sh to start jackd and scsynth
+
+### to build the debug version:
+
+    mkdir debug
+    cd debug
+    cmake -DCMAKE_BUILD_TYPE=Debug ../
+    make install

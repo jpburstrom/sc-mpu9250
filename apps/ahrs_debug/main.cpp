@@ -2,6 +2,8 @@
 #include "Adafruit_LSM9DS0.h"
 #include "Adafruit_Simple_AHRS.h"
 
+#include "debug.h"
+
 #include <signal.h>
 #include <iostream>
 
@@ -12,6 +14,7 @@
 bool running = true;
 
 void kill_handler(int s) {
+  debug("kill_handler");
   running = false;
 }
 
