@@ -33,3 +33,11 @@ After installing, you can run  scripts/start_all.sh to start jackd and scsynth
     cd debug
     cmake -DCMAKE_BUILD_TYPE=Debug ../
     make install
+
+### Requirements
+
+    You should have wiringPi installed!
+
+    add this to your sudoers file so we can run gpio w/o root
+
+    %gpio ALL = NOPASSWD: /usr/local/bin/gpio

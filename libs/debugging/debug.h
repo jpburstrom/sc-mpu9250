@@ -24,7 +24,7 @@ struct InOutWrapper {
     std::cout << msg << " complete" << std::endl;
   }
 
-  const std::string& msg;
+  const std::string msg;
 };
 
 

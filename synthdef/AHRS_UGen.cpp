@@ -94,7 +94,7 @@ AHRS_Singleton* AHRS_Singleton::instance = nullptr;
 void AHRS_Ctor(AHRS *unit) {
     debug("AHRS_Ctor");
 
-    unit->channel = static_cast<int>(IN0(1));
+    unit->channel = static_cast<int>(IN0(0));
 
     SETCALC(AHRS_next_k);
     AHRS_next_k(unit, 1);
