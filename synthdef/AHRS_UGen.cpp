@@ -2,12 +2,14 @@
 #include "Adafruit_LSM9DS0.h"
 #include "Adafruit_Simple_AHRS.h"
 
+#include "debug.h"
+
 
 #include <SC_PlugIn.h>
 
 // written with reference to the chapter "Writing Unit Generator Plug-ins" in The SuperCollider Book
+// and also http://doc.sccode.org/Guides/WritingUGens.html accessed March 2, 2015
 
-static InterfaceTable *ft;
 
 struct AHRS : public Unit {
     static const int ROLL = 0;
@@ -17,6 +19,26 @@ struct AHRS : public Unit {
 
     int channel = ROLL;
 };
+
+// PLUGIN INTERFACE
+
+extern "C" {
+  void AHRS_Ctor(AHRS *unit);
+  void AHRS_next_k(AHRS *unit, int numSamples);
+}
+
+
+static InterfaceTable *ft;
+
+PluginLoad(AHRS)
+{
+  debug("PluginLoad")
+  ft = inTable;
+  DefineSimpleUnit(AHRS);
+}
+
+
+// PLUGIN IMPLEMENTATION
 
 
 class AHRS_Singleton {
@@ -52,6 +74,8 @@ private:
     Adafruit_Simple_AHRS* ahrs;
 
     AHRS_Singleton()  {
+      debug("AHRS_Singleton ctor")
+
       lsm.begin();
       ahrs = new Adafruit_Simple_AHRS(&lsm.getAccel(), &lsm.getMag());
       orientation.roll = 0;
@@ -67,32 +91,24 @@ private:
 AHRS_Singleton* AHRS_Singleton::instance = nullptr;
 
 
-
-extern "C" {
-  void load(InterfaceTable *inTable);
-  void AHRS_Ctor(AHRS *unit);
-  void AHRS_Next(AHRS *unit, int numSamples);
-}
-
 void AHRS_Ctor(AHRS *unit) {
+    debug("AHRS_Ctor");
+
     unit->channel = static_cast<int>(IN0(1));
 
-    SETCALC(AHRS_Next);
-    AHRS_Next(unit, 1);
+    SETCALC(AHRS_next_k);
+    AHRS_next_k(unit, 1);
 }
 
-void AHRS_Next(AHRS *unit, int numSamples) {
-  float *out = OUT(0);
+
+void AHRS_next_k(AHRS *unit, int numSamples) {
+  debug("AHRS_next_k");
+  float* out = OUT(0);
 
   // TODO: this should probably be done differently
   float value = AHRS_Singleton::get()->read(unit->channel);
 
-  for (int i = 0; i < FULLBUFLENGTH; i++) {
+  for (int i = 0; i < numSamples ; i++) {
     out[i] = value;
   }
-}
-
-void load(InterfaceTable* inTable) {
-  ft = inTable;
-  DefineSimpleUnit(AHRS);
 }

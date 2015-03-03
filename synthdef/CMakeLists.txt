@@ -1,8 +1,10 @@
 add_library(AHRS MODULE AHRS_UGen.cpp)
-target_link_libraries(AHRS Adafruit_AHRS Adafruit_LSM9DS0 Adafruit_Sensor LinuxDuino)
+target_link_libraries(AHRS Debugging Adafruit_AHRS Adafruit_LSM9DS0 Adafruit_Sensor LinuxDuino)
 set_target_properties(AHRS PROPERTIES PREFIX "") # not libAHRS.so
 
-set(SUPERCOLLIDER_INCLUDE /usr/local/include/SuperCollider)
+# set(SUPERCOLLIDER_INCLUDE /usr/local/include/SuperCollider)
+set(SUPERCOLLIDER_INCLUDE ~/git/supercollider/include)
+
 include_directories(AHRS ${SUPERCOLLIDER_INCLUDE}/plugin_interface ${SUPERCOLLIDER_INCLUDE}/common)
 
 
