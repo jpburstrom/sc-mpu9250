@@ -1,19 +1,14 @@
 s.waitForBoot({
-  (
-   SynthDef(\NIME, {
-
-      var b = Buffer.alloc(s, 44100 * 60 * 3, 1), // a 3-minute, 1 channel buffer
-          offset = AHRS.kr(0, 0.2, AHRS.kr(1, 0.2, 72)) / 145,
-          trigger = Impulse.ar(60, 0, 2, -1);
+  {
+      var frames = 44100 * 60 * 3,
+          b = Buffer.alloc(s, frames, 1), // a 3-minute, 1 channel buffer
+          offset = AHRS.rollKr(0, 1/360, 0.5);
 
       // record into the buffer somewhere depending on AHRS data
-      RecordBuf.ar(SoundIn.ar(0), b, offset * 44100 * 60 * 3, 1, 1, GPIO.kr(26, -2 + 1, 1, trigger));
+      // RecordBuf.ar(SoundIn.ar(0), b, offset * frames, loop:1, run:GPIO.kr(26, -2 + 1, 1), trigger:Impulse.kr(30));
+      RecordBuf.ar(SoundIn.ar(0), b, offset * frames, loop:1, run:1, trigger:Impulse.kr(30));
 
       // granulate out of the buffer at the same position
-      Out.ar(0, GrainBuf.ar(1, 0, 1, b, offset))
-  }).add;
-  );
-
-  a = Synth(\NIME);
-
-}, 300)
+       GrainBuf.ar(1, Impulse.kr(10), 0.5, b, offset);
+  }.play;
+}, 300, {"oops".println})
