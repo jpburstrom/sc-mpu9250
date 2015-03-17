@@ -1,0 +1,5 @@
+bash ~/git/nime/scripts/start_all.sh &
+
+sclang ~/git/nime/scripts/sboot.sc && sclang ~/git/nime/synthdef/NIME1.sc &
+
+disown
