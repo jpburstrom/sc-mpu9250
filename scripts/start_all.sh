@@ -8,6 +8,8 @@ if [[ $? -ne 0 ]] ; then
   exit
 fi
 
+sudo killall scsynth jackd
+
 # need to sudo later, so get the password now
 sudo echo "starting scsynth"
 
