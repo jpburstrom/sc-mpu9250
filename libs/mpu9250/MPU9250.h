@@ -183,6 +183,26 @@ typedef bool boolean;
 #define AK8963_ADDRESS  0x0C   // Address of magnetometer
 #endif // AD0
 
+typedef struct {
+    float x;
+    float y;
+    float z;
+   int16_t raw[3];
+   float calibration[3];
+   float bias[3];
+   float scale[3];
+   float res;
+
+} mpu9250Sensor_t;
+
+typedef struct {
+
+    float pitch;
+    float roll;
+    float yaw;
+
+} mpu9250Orientation_t;
+
 class MPU9250 : public I2c
 {
   private:
@@ -216,55 +236,52 @@ class MPU9250 : public I2c
     
     uint64_t startMicros = 0;
 
-    float pitch, yaw, roll;
+    mpu9250Orientation_t orientation;
+
     float temperature;   // Stores the real internal chip temperature in Celsius
-    int16_t tempCount;   // Temperature raw count output
-    uint32_t delt_t = 0; // Used to control display output rate
 
-    uint32_t count = 0, sumCount = 0; // used to control display output rate
+    uint32_t sumCount = 0; // used to control display output rate
     float deltat = 0.0f, sum = 0.0f;  // integration interval for both filter schemes
-    uint32_t lastUpdate = 0, firstUpdate = 0; // used to calculate integration interval
-    uint32_t Now = 0;        // used to calculate integration interval
+    uint32_t lastUpdate = 0; // used to calculate integration interval
+    uint32_t now = 0;        // used to calculate integration interval
 
-    int16_t gyroCount[3];   // Stores the 16-bit signed gyro sensor output
-    int16_t magCount[3];    // Stores the 16-bit signed magnetometer sensor output
-    // Scale resolutions per LSB for the sensors
-    float aRes, gRes, mRes;
-    // Variables to hold latest sensor data values
-    float ax, ay, az, gx, gy, gz, mx, my, mz;
-    // Factory mag calibration and mag bias
-    float magCalibration[3] = {0, 0, 0}, magBias[3] = {0,0,0}, magScale[3] = {1, 1, 1};
-    // Bias corrections for gyro and accelerometer
-    float gyroBias[3] = {0, 0, 0}, accelBias[3] = {0, 0, 0};
+    // Variables to hold latest sensor data values + bias and calibration
+    mpu9250Sensor_t accel;
+    mpu9250Sensor_t gyro;
+    mpu9250Sensor_t mag;
+
     float selfTest[6];
     // Stores the 16-bit signed accelerometer sensor output
-    int16_t accelCount[3];
 
-    void getMres();
-    void getGres();
-    void getAres();
-    void getData();
+    // Methods to calculate resolutions for variables
+    void calculateResolutions();
 
+    //Private methods to read and scale sensor data
+    void readAccelData();
+    void readGyroData();
+    void readMagData();
+    void readTempData();
+    
+    //Helper methods
     uint32_t micros();
+    void updateTime();
+
+    //i2c interface
+	int _i2c_address;
     void writeByte(uint8_t, uint8_t, uint8_t);
     uint8_t readByte(uint8_t, uint8_t);
     void readBytes(uint8_t, uint8_t, uint8_t, uint8_t *);
-	int _i2c_address;
-    void updateTime();
 
     void initAK8963();
     void initMPU9250();
     
   public:
-  	boolean begin(uint8_t bus = 1, uint8_t i2caddr = MPU9250_ADDRESS);
+    //Initialize
+  	boolean init(uint8_t bus = 1, uint8_t i2caddr = MPU9250_ADDRESS);
 
     void getData();
-    void readAccelData(int16_t *);
-    void readGyroData(int16_t *);
-    void readMagData(int16_t *);
-    int16_t readTempData();
-    void magcalMPU9250();
-    void calibrateMPU9250();
+    void calibrateMag();
+    void calibrateAccelGyro();
     void MPU9250SelfTest(float * destination);
     
     
