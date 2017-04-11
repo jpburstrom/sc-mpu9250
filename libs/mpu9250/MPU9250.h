@@ -236,19 +236,11 @@ class MPU9250 : public I2c
     
     uint64_t startMicros = 0;
 
-    mpu9250Orientation_t orientation;
-
-    float temperature;   // Stores the real internal chip temperature in Celsius
-
     uint32_t sumCount = 0; // used to control display output rate
     float deltat = 0.0f, sum = 0.0f;  // integration interval for both filter schemes
     uint32_t lastUpdate = 0; // used to calculate integration interval
     uint32_t now = 0;        // used to calculate integration interval
 
-    // Variables to hold latest sensor data values + bias and calibration
-    mpu9250Sensor_t accel;
-    mpu9250Sensor_t gyro;
-    mpu9250Sensor_t mag;
 
     float selfTest[6];
     // Stores the 16-bit signed accelerometer sensor output
@@ -272,14 +264,24 @@ class MPU9250 : public I2c
     uint8_t readByte(uint8_t, uint8_t);
     void readBytes(uint8_t, uint8_t, uint8_t, uint8_t *);
 
-    void initAK8963();
-    void initMPU9250();
+    void initMag();
+    void initAccelGyro();
     
   public:
     //Initialize
+
+    // Variables to hold latest sensor data values + bias and calibration
+    mpu9250Sensor_t accel;
+    mpu9250Sensor_t gyro;
+    mpu9250Sensor_t mag;
+    float temperature;   // Stores the real internal chip temperature in Celsius
+
+    // Pitch/Roll/Yaw
+    mpu9250Orientation_t orientation;
+
   	boolean init(uint8_t bus = 1, uint8_t i2caddr = MPU9250_ADDRESS);
 
-    void getData();
+    void read();
     void calibrateMag();
     void calibrateAccelGyro();
     void MPU9250SelfTest(float * destination);

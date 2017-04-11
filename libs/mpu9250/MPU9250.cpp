@@ -4,10 +4,12 @@
 #include "quaternionFilters.h"
 
 
-void MPU9250::getData() {
+//Read sensor data and populate accel, gyro, mag and temperature variables
+void MPU9250::read() {
     // If intPin goes high, all data registers have new data
     const float *q;
   if (readByte(MPU9250_ADDRESS, INT_STATUS) & 0x01) {  // On interrupt, check if data ready interrupt
+      printf("data ready\n");
     readAccelData();  // Read the x/y/z adc values
     readGyroData();  // Read the x/y/z adc values
     readMagData();  // Read the x/y/z adc values
@@ -51,18 +53,18 @@ void MPU9250::getData() {
   
   q = getQ();
   
-  orientation.heading   = atan2(2.0f * (q[1] * q[2] + q[0] * q[3]), q[0] * q[0] + q[1] * q[1] - q[2] * q[2] - q[3] * q[3]);   
+  orientation.yaw   = atan2(2.0f * (q[1] * q[2] + q[0] * q[3]), q[0] * q[0] + q[1] * q[1] - q[2] * q[2] - q[3] * q[3]);   
   orientation.pitch = -asin(2.0f * (q[1] * q[3] - q[0] * q[2]));
     orientation.roll  = atan2(2.0f * (q[0] * q[1] + q[2] * q[3]), q[0] * q[0] - q[1] * q[1] - q[2] * q[2] + q[3] * q[3]);
     orientation.pitch *= 180.0f / M_PI;
-    orientation.heading   *= 180.0f / M_PI; 
-    //orientation.heading   -= 13.8; // Declination at Danville, California is 13 degrees 48 minutes and 47 seconds on 2014-04-04
+    orientation.yaw   *= 180.0f / M_PI; 
+    //orientation.yaw   -= 13.8; // Declination at Danville, California is 13 degrees 48 minutes and 47 seconds on 2014-04-04
     orientation.roll  *= 180.0f / M_PI;
     
-    //printf("rate: %fHz\t pitch: %f \t roll: %f \t heading: %f\t magY: %f\n", sumCount / sum, pitch, roll, heading, my);
+    //printf("rate: %fHz\t pitch: %f \t roll: %f \t yaw: %f\t magY: %f\n", sumCount / sum, pitch, roll, yaw, my);
 #ifdef DEBUG
     //FIXME
-    //printf("rate: %fHz\t accel: %f %f %f \t gyro: %f %f %f \t pitch: %f \t roll: %f \t heading: %f\t magY: %f\n", sumCount / sum, ax, ay, az, gx, gy, gz, pitch, roll, heading, my);
+    //printf("rate: %fHz\t accel: %f %f %f \t gyro: %f %f %f \t pitch: %f \t roll: %f \t yaw: %f\t magY: %f\n", sumCount / sum, ax, ay, az, gx, gy, gz, pitch, roll, yaw, my);
 #endif
 }
 
@@ -71,24 +73,23 @@ void MPU9250::readAccelData()
 {
   uint8_t rawData[6];  // x/y/z accel register data stored here
   readBytes(MPU9250_ADDRESS, ACCEL_XOUT_H, 6, &rawData[0]);  // Read the six raw data registers into data array
-  accel.x = ((int16_t)rawData[0] << 8) | rawData[1] ;  // Turn the MSB and LSB into a signed 16-bit value
-  accel.y = ((int16_t)rawData[2] << 8) | rawData[3] ;  
-  accel.z = ((int16_t)rawData[4] << 8) | rawData[5] ; 
-  //printf("Accel XYZ: %i %i %i", destination[0], destination[1], destination[2]);
+
+  accel.raw[0] = ((int16_t)rawData[0] << 8) | rawData[1] ;  // Turn the MSB and LSB into a signed 16-bit value
+  accel.raw[1] = ((int16_t)rawData[2] << 8) | rawData[3] ;  
+  accel.raw[2] = ((int16_t)rawData[4] << 8) | rawData[5] ; 
 }
 
 
-void MPU9250::readGyroData(int16_t * destination)
+void MPU9250::readGyroData()
 {
   uint8_t rawData[6];  // x/y/z gyro register data stored here
   readBytes(MPU9250_ADDRESS, GYRO_XOUT_H, 6, &rawData[0]);  // Read the six raw data registers sequentially into data array
-  gyro.x = ((int16_t)rawData[0] << 8) | rawData[1] ;  // Turn the MSB and LSB into a signed 16-bit value
-  gyro.y = ((int16_t)rawData[2] << 8) | rawData[3] ;  
-  gyro.z = ((int16_t)rawData[4] << 8) | rawData[5] ; 
-  //printf("Gyro XYZ: %i %i %i", destination[0], destination[1], destination[2]);
+  gyro.raw[0] = ((int16_t)rawData[0] << 8) | rawData[1] ;  // Turn the MSB and LSB into a signed 16-bit value
+  gyro.raw[1] = ((int16_t)rawData[2] << 8) | rawData[3] ;  
+  gyro.raw[2] = ((int16_t)rawData[4] << 8) | rawData[5] ; 
 }
 
-void MPU9250::readMagData(int16_t * destination)
+void MPU9250::readMagData()
 {
   // x/y/z gyro register data, ST2 register stored here, must read ST2 at end of
   // data acquisition
@@ -104,20 +105,19 @@ void MPU9250::readMagData(int16_t * destination)
     if(!(c & 0x08))
     {
       // Turn the MSB and LSB into a signed 16-bit value
-      mag.x = ((int16_t)rawData[1] << 8) | rawData[0];
+      mag.raw[0] = ((int16_t)rawData[1] << 8) | rawData[0];
       // Data stored as little Endian 
-      mag.y = ((int16_t)rawData[3] << 8) | rawData[2];
-      mag.z = ((int16_t)rawData[5] << 8) | rawData[4];
+      mag.raw[1] = ((int16_t)rawData[3] << 8) | rawData[2];
+      mag.raw[2] = ((int16_t)rawData[5] << 8) | rawData[4];
         
     }
-    //printf("Mag XYZ: %i %i %i", destination[0], destination[1], destination[2]);
   }
   
 
 }
 
 
-int16_t MPU9250::readTempData()
+void MPU9250::readTempData()
 {
   uint8_t rawData[2];  // x/y/z gyro register data stored here
   readBytes(MPU9250_ADDRESS, TEMP_OUT_H, 2, &rawData[0]);  // Read the two raw data registers sequentially into data array 
@@ -139,7 +139,7 @@ void MPU9250::updateTime()
   sumCount++;
 }
 
-boolean MPU9250::begin(uint8_t bus, uint8_t i2caddr) {
+boolean MPU9250::init(uint8_t bus, uint8_t i2caddr) {
   _i2c_address = i2caddr;
   
   startMicros = micros();
@@ -154,6 +154,10 @@ boolean MPU9250::begin(uint8_t bus, uint8_t i2caddr) {
     printf("MPU9250 is online...");
 
     calculateResolutions();
+
+    initMag();
+    initAccelGyro();
+
     //Do stuff
     
     return true;
@@ -165,7 +169,7 @@ boolean MPU9250::begin(uint8_t bus, uint8_t i2caddr) {
 }
 
 
-void MPU9250::initAK8963()
+void MPU9250::initMag()
 {
   // First extract the factory calibration for each magnetometer axis
   uint8_t rawData[3];  // x/y/z gyro calibration data stored here
@@ -190,7 +194,7 @@ void MPU9250::initAK8963()
   delay(10);
 }
 
-void MPU9250::initMPU9250()
+void MPU9250::initAccelGyro()
 {  
  // wake up device
   writeByte(MPU9250_ADDRESS, PWR_MGMT_1, 0x00); // Clear sleep mode bit (6), enable all sensors 
@@ -262,7 +266,7 @@ void MPU9250::calibrateMag()
     if(Mmode == 0x02) sample_count = 128;  // at 8 Hz ODR, new mag data is available every 125 ms
     if(Mmode == 0x06) sample_count = 1500;  // at 100 Hz ODR, new mag data is available every 10 ms
    for(ii = 0; ii < sample_count; ii++) {
-    readMagData(mag_temp);  // Read the mag data   
+    readMagData();  // Read the mag data   
     for (int jj = 0; jj < 3; jj++) {
       if(mag_temp[jj] > mag_max[jj]) mag_max[jj] = mag_temp[jj];
       if(mag_temp[jj] < mag_min[jj]) mag_min[jj] = mag_temp[jj];
@@ -404,13 +408,16 @@ void MPU9250::calibrateAccelGyro()
   readBytes(MPU9250_ADDRESS, ZA_OFFSET_H, 2, &data[0]);
   accel_bias_reg[2] = (int32_t) (((int16_t)data[0] << 8) | data[1]);
   
+  /*
+   * Temperature compensation -- doesn't work on 9250?
   uint32_t mask = 1uL; // Define mask for temperature compensation bit 0 of lower byte of accelerometer bias registers
   uint8_t mask_bit[3] = {0, 0, 0}; // Define array to hold mask bit for each accelerometer bias axis
   
   for(ii = 0; ii < 3; ii++) {
     if((accel_bias_reg[ii] & mask)) mask_bit[ii] = 0x01; // If temperature compensation bit is set, record that fact in mask_bit
   }
-  
+  */
+
   // Construct total accelerometer bias, including calculated average accelerometer bias from above
   accel_bias_reg[0] -= (accel_bias[0]/8); // Subtract calculated averaged accelerometer bias scaled to 2048 LSB/g (16 g full scale)
   accel_bias_reg[1] -= (accel_bias[1]/8);
