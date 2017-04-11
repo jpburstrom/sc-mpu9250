@@ -72,5 +72,4 @@ if(MINGW)
 endif()
 
 add_library(${PROJECT} MODULE MPU9250_UGen.cpp)
-target_link_libraries(AHRS mpu9250 Debugging)
-set_target_properties(AHRS PROPERTIES PREFIX "") # not libAHRS.so
+target_link_libraries(${PROJECT} mpu9250 Debugging)

@@ -8,12 +8,9 @@ message(${CMAKE_CXX_FLAGS_RELEASE})
 # hack to get c++11 + warnings
 add_definitions(-std=c++11 -Wall)
 
-include_directories(libs/LinuxDuino libs/Adafruit_Sensor libs/Adafruit_LSM9DS0_Library libs/Adafruit_AHRS libs/debugging)
+include_directories(libs/mpu9250 libs/debugging)
 
-add_subdirectory(libs/LinuxDuino)
-add_subdirectory(libs/Adafruit_Sensor)
-add_subdirectory(libs/Adafruit_LSM9DS0_Library)
-add_subdirectory(libs/Adafruit_AHRS)
+add_subdirectory(libs/mpu9250)
 add_subdirectory(libs/debugging)
 
 add_subdirectory(apps/debug)
