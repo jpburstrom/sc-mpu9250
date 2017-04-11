@@ -1,3 +1,3 @@
 
 add_executable(ahrs_debug main.cpp)
-target_link_libraries(ahrs_debug Adafruit_AHRS Adafruit_LSM9DS0 Adafruit_Sensor LinuxDuino)
+target_link_libraries(ahrs_debug mpu9250)

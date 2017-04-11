@@ -1,7 +1,4 @@
-#include "Adafruit_Sensor.h"
-#include "Adafruit_LSM9DS0.h"
-#include "Adafruit_Simple_AHRS.h"
-
+#include "MPU9250.h"
 #include "debug.h"
 
 #include <signal.h>
@@ -28,24 +25,20 @@ int main(int argc, char** argv) {
   sigIntHandler.sa_flags = 0;
   sigaction(SIGINT, &sigIntHandler, NULL);
 
-  Adafruit_LSM9DS0 lsm;
-  if (!lsm.begin()) {
+  MPU9250 mpu;
+  if (!mpu.init()) {
     std::cerr <<  "sensor init failed!" << std::endl;
     return 1;
   }
 
-  Adafruit_Simple_AHRS ahrs(&lsm.getAccel(), &lsm.getMag());
-  sensors_vec_t   orientation;
-
   while (running) {
-    if (ahrs.getOrientation(&orientation)) {
-      std::cout << "Orientation{ r:"
-        << orientation.roll
-        << " p:" << orientation.pitch
-        << " h:" << orientation.heading << " }" << std::endl;
-    }
+      mpu.read();
+  std::cout << "Roll:"
+    << mpu.orientation.roll
+    << "\tPitch:" << mpu.orientation.pitch
+    << "\tYaw:" << mpu.orientation.yaw << std::endl;
 
-    LinuxDuino::delay(100);
+    usleep(100000);
 
   }
 }

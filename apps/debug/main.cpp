@@ -1,7 +1,7 @@
-#include <Adafruit_Sensor.h>
-#include <Adafruit_LSM9DS0.h>
+#include <MPU9250.h>
 
 #include <signal.h>
+#include <unistd.h>
 #include <iostream>
 
 bool running = true;
@@ -20,29 +20,25 @@ int main(int argc, char** argv) {
   sigIntHandler.sa_flags = 0;
   sigaction(SIGINT, &sigIntHandler, NULL);
 
-  Adafruit_LSM9DS0 lsm;
-  if (!lsm.begin()) {
+  MPU9250 mpu;
+  if (!mpu.init()) {
     std::cerr <<  "sensor init failed!" << std::endl;
     return 1;
   }
 
-  lsm.setupAccel(lsm.LSM9DS0_ACCELRANGE_2G);
-  lsm.setupMag(lsm.LSM9DS0_MAGGAIN_2GAUSS);
-  lsm.setupGyro(lsm.LSM9DS0_GYROSCALE_245DPS);
-
   while (running) {
-    lsm.read();
-    std::cout << "Accel X: " << lsm.accelData.x
-       << " Y: " << (int)lsm.accelData.y
-       << " Z: " << lsm.accelData.z
-       << "\t Mag X: " << lsm.magData.x
-       << " Y: " << lsm.magData.y
-       << " Z: " << lsm.magData.z
-       << "\t Gyro X: " << lsm.gyroData.x
-       << " Y: " << lsm.gyroData.y
-       << " Z: " << lsm.gyroData.z
-       << "\t Temp: "  << lsm.temperature << std::endl;
+    mpu.read();
+    std::cout << "Accel X: " << mpu.accel.x
+       << " Y: " << mpu.accel.y
+       << " Z: " << mpu.accel.z
+       << "\t Mag X: " << mpu.mag.x
+       << " Y: " << mpu.mag.y
+       << " Z: " << mpu.mag.z
+       << "\t Gyro X: " << mpu.gyro.x
+       << " Y: " << mpu.gyro.y
+       << " Z: " << mpu.gyro.z
+       << "\t Temp: "  << mpu.temperature << std::endl;
 
-    LinuxDuino::delay(200);
+    usleep(100000);
   }
 }
