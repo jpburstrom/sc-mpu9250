@@ -4,7 +4,7 @@
 #scsynth options are Bela-specific
 
 #First check if we want to store the synthdef
-if [ $1 == "load" ]; then
+if [ "$1" == "load" ]; then
     sclang loaddefs.scd
 fi
 
