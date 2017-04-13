@@ -20,11 +20,25 @@ int main(int argc, char** argv) {
   sigIntHandler.sa_flags = 0;
   sigaction(SIGINT, &sigIntHandler, NULL);
 
+  
   MPU9250 mpu;
+
+
   if (!mpu.init()) {
     std::cerr <<  "sensor init failed!" << std::endl;
     return 1;
+  } else {
+      cout << "Init ok\n";
   }
+  
+  if (!mpu.testRW()) {
+    std::cerr <<  "Can't write to i2c device!" << std::endl;
+    return 1;
+  } else {
+      cout << "R/W OK\n";
+  }
+
+  usleep(1000*1000);
 
   while (running) {
     mpu.read();

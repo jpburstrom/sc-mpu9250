@@ -286,6 +286,8 @@ class MPU9250 : public I2c
 
   	boolean init(uint8_t bus = 1, uint8_t i2caddr = MPU9250_ADDRESS);
 
+    bool testRW();
+
     void read();
     void read(mpu9250State_t &state);
     void calibrateMag();

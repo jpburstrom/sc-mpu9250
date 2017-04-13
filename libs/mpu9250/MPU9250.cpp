@@ -31,7 +31,7 @@ void MPU9250::read() {
     
     // Calculate the magnetometer values in milliGauss
     // Include factory calibration per data sheet and user environmental corrections
-    printf("magRaw %i", mag.raw[0]);
+    //printf("magRaw %i", mag.raw[0]);
     mag.x = mag.scale[0] * ((float)mag.raw[0]*mag.res*mag.calibration[0] - mag.bias[0]);  // get actual magnetometer value, this depends on scale being set
     mag.y = mag.scale[1] * ((float)mag.raw[1]*mag.res*mag.calibration[1] - mag.bias[1]);  
     mag.z = mag.scale[2] * ((float)mag.raw[2]*mag.res*mag.calibration[2] - mag.bias[2]);
@@ -63,10 +63,12 @@ void MPU9250::read() {
     orientation.roll  *= 180.0f / M_PI;
     
     //printf("rate: %fHz\t pitch: %f \t roll: %f \t yaw: %f\t magY: %f\n", sumCount / sum, pitch, roll, yaw, my);
+    /*
     printf("rate: %fHz\t accel: %f %f %f \t gyro: %f %f %f \t pitch: %f \t roll: %f \t yaw: %f\t mag: %f,%f,%f\n", 
             sumCount / sum, accel.x, accel.y, accel.z, gyro.x, gyro.y, gyro.z, orientation.pitch, orientation.roll, orientation.yaw,
             mag.x, mag.y, mag.z
           );
+          */
 #ifdef DEBUG
     //FIXME
     //printf("rate: %fHz\t accel: %f %f %f \t gyro: %f %f %f \t pitch: %f \t roll: %f \t yaw: %f\t magY: %f\n", sumCount / sum, ax, ay, az, gx, gy, gz, pitch, roll, yaw, my);
@@ -199,7 +201,10 @@ void MPU9250::initMag()
   uint8_t rawData[3];  // x/y/z gyro calibration data stored here
   
   writeByte(MPU9250_ADDRESS, USER_CTRL, 0x00); //Disable master mode
+  delay(11);
   writeByte(MPU9250_ADDRESS, INT_PIN_CFG, 0x02);//Set bypass enabled
+
+  delay(10);
   
   writeByte(AK8963_ADDRESS, AK8963_CNTL, 0x00); // Power down magnetometer  
   delay(10);
@@ -217,6 +222,8 @@ void MPU9250::initMag()
   // XXX Node MPU: Mscale = MFS_14BITS, Mmode = 0x02
   writeByte(AK8963_ADDRESS, AK8963_CNTL, Mscale << 4 | Mmode); // Set magnetometer data resolution and sample ODR
   delay(10);
+
+  writeByte(MPU9250_ADDRESS, INT_PIN_CFG, 0x02);//Set bypass enabled
 
   //Initialize mag raw values
   mag.raw[0] = 0;
@@ -566,25 +573,53 @@ void MPU9250::MPU9250SelfTest(float * destination) // Should return percent devi
   }
 }
 
+//Check if read/write seems to work
+bool MPU9250::testRW()
+{
+    uint8_t val;
+    bool out;
+    val = readByte(MPU9250_ADDRESS, INT_PIN_CFG);
+    writeByte(MPU9250_ADDRESS, INT_PIN_CFG, val ^ 0x02);
+    delay(1);
+    out = (val ^ 0x02) == readByte(MPU9250_ADDRESS, INT_PIN_CFG);
+    if (out) {
+        writeByte(MPU9250_ADDRESS, INT_PIN_CFG, val);
+    }
+
+    return out;
+}
+
         
 // Wire.h read and write protocols
 void MPU9250::writeByte(uint8_t address, uint8_t subAddress, uint8_t data)
 {
-    uint8_t buf[3] = { address, subAddress, data };
+    //printf("Writing byte: 0x%02x 0x%02x [ 0x%02x ]\n", address, subAddress, data);
 
-    printf("Writing byte: 0x%02x 0x%02x [ 0x%02x ]\n", address, subAddress, data);
-    
-    //FIXME: what happened to 
-    if(write(i2C_file, buf, 3) != 3)
-    {
-        //cout << "Failed to write register " << (int)address << " on MPU9250\n";
-        printf("Failed to write register 0x%02x on MPU9250\n", subAddress);
-        return;
+    unsigned char outbuf[2];
+    struct i2c_rdwr_ioctl_data packets;
+    struct i2c_msg messages[1];
+
+    outbuf[0] = subAddress;
+    outbuf[1] = data;
+
+    /*
+     * In order to read a register, we first do a "dummy write" by writing
+     * 0 bytes to the register we want to read from.  This is similar to
+     * the packet in set_i2c_register, except it's 1 byte rather than 2.
+     */
+    messages[0].addr  = address;
+    messages[0].flags = 0;
+    messages[0].len   = sizeof(outbuf);
+    messages[0].buf   = outbuf;
+
+    /* Send the request to the kernel and get the result back */
+    packets.msgs      = messages;
+    packets.nmsgs     = 1;
+    if(ioctl(i2C_file, I2C_RDWR, &packets) < 0) {
+        //printf("Unable to send data\n");
+        //return 0;
     }
-  //Wire.beginTransmission(address);  // Initialize the Tx buffer
-  //Wire.write(subAddress);           // Put slave register address in Tx buffer
-  //Wire.write(data);                 // Put data in Tx buffer
-  //Wire.endTransmission();           // Send the Tx buffer
+
 }
 
 uint8_t MPU9250::readByte(uint8_t address, uint8_t subAddress)
