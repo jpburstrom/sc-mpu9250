@@ -120,7 +120,6 @@ void MPU9250::readMagData()
   
   if (readByte(AK8963_ADDRESS, AK8963_ST1) & 0x01)
   {
-      cout << "Could read mag byte\n";
     // Read the six raw data and ST2 registers sequentially into data array
     readBytes(AK8963_ADDRESS, AK8963_XOUT_L, 7, &rawData[0]);
     uint8_t c = rawData[6]; // End data read by reading ST2 register
@@ -134,10 +133,6 @@ void MPU9250::readMagData()
       mag.raw[2] = ((int16_t)rawData[5] << 8) | rawData[4];
         
     }
-  }
-  else
-  {
-      cout << "Couldn't read mag byte\n";
   }
   
 
@@ -185,8 +180,8 @@ boolean MPU9250::init(uint8_t bus, uint8_t i2caddr) {
 
     calculateResolutions();
 
-    initMag();
     initAccelGyro();
+    initMag();
 
     
     return true;
@@ -207,28 +202,32 @@ void MPU9250::initMag()
   writeByte(MPU9250_ADDRESS, INT_PIN_CFG, 0x02);//Set bypass enabled
   
   writeByte(AK8963_ADDRESS, AK8963_CNTL, 0x00); // Power down magnetometer  
-  delay(100);
+  delay(10);
   writeByte(AK8963_ADDRESS, AK8963_CNTL, 0x0F); // Enter Fuse ROM access mode
-  delay(100);
+  delay(10);
   readBytes(AK8963_ADDRESS, AK8963_ASAX, 3, &rawData[0]);  // Read the x-, y-, and z-axis calibration values
   mag.calibration[0] =  (float)(rawData[0] - 128)/256. + 1.;   // Return x-axis sensitivity adjustment values, etc.
   mag.calibration[1] =  (float)(rawData[1] - 128)/256. + 1.;  
   mag.calibration[2] =  (float)(rawData[2] - 128)/256. + 1.; 
   writeByte(AK8963_ADDRESS, AK8963_CNTL, 0x00); // Power down magnetometer  
-  delay(100);
+  delay(10);
   // Configure the magnetometer for continuous read and highest resolution
   // set Mscale bit 4 to 1 (0) to enable 16 (14) bit resolution in CNTL register,
   // and enable continuous mode data acquisition Mmode (bits [3:0]), 0010 for 8 Hz and 0110 for 100 Hz sample rates
+  // XXX Node MPU: Mscale = MFS_14BITS, Mmode = 0x02
   writeByte(AK8963_ADDRESS, AK8963_CNTL, Mscale << 4 | Mmode); // Set magnetometer data resolution and sample ODR
-  delay(100);
-  writeByte(AK8963_ADDRESS, AK8963_CNTL, Mscale << 4 | Mmode); // Set magnetometer data resolution and sample ODR
-  delay(100);
+  delay(10);
+
+  //Initialize mag raw values
+  mag.raw[0] = 0;
+  mag.raw[1] = 0;
+  mag.raw[2] = 0;
 }
 
 void MPU9250::initAccelGyro()
 {  
  // wake up device
-  writeByte(MPU9250_ADDRESS, PWR_MGMT_1, 0x00); // Clear sleep mode bit (6), enable all sensors 
+  writeByte(MPU9250_ADDRESS, PWR_MGMT_1, 0x80); // Reset, Clear sleep mode bit (6), enable all sensors 
   delay(10); // Wait for all registers to reset 
 
  // get stable time source
@@ -571,12 +570,15 @@ void MPU9250::MPU9250SelfTest(float * destination) // Should return percent devi
 // Wire.h read and write protocols
 void MPU9250::writeByte(uint8_t address, uint8_t subAddress, uint8_t data)
 {
-    uint8_t buf[2] = { address, data };
+    uint8_t buf[3] = { address, subAddress, data };
+
+    printf("Writing byte: 0x%02x 0x%02x [ 0x%02x ]\n", address, subAddress, data);
     
-    if(write(i2C_file, buf, 2) != 2)
+    //FIXME: what happened to 
+    if(write(i2C_file, buf, 3) != 3)
     {
         //cout << "Failed to write register " << (int)address << " on MPU9250\n";
-        printf("Failed to write register 0x%02x on MPU9250\n", address);
+        printf("Failed to write register 0x%02x on MPU9250\n", subAddress);
         return;
     }
   //Wire.beginTransmission(address);  // Initialize the Tx buffer
