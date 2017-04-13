@@ -1,0 +1,20 @@
+#!/bin/bash
+
+#Script to quickly launch scsynth and play a test synthdef
+#scsynth options are Bela-specific
+
+#First check if we want to store the synthdef
+if [ $1 == "load" ]; then
+    sclang loaddefs.scd
+fi
+
+killall scsynth
+trap 'kill -TERM $PID' TERM INT
+scsynth -u 57110 -a 116 -i 2 -o 2 -b 1026 -z 16 -R 0 -C 0 -l 64 -J 8 -K 8 -G 16 -Q 0 -X 25 -Y 25 -s 1 -x 0 -y 0 -g 0 -T 0 &
+PID=$!
+sleep 3
+oscsend localhost 57110 /s_new si mpuTest -1
+wait $PID
+trap - TERM INT
+wait $PID
+EXIT_STATUS=$?
