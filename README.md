@@ -1,11 +1,13 @@
-NIME project using SuperCollider and LSMD9S0 from Adafruit.
+sc-mpu9250
+
+Supercollider plugin to read data from InvenSense MPU9250 over i2c.
+Based on https://github.com/yourpalal/lsmd9dso-supercollider
 
 This project will build:
 
- * debug: an executable that reads the data from LSMD9S0 over i2c and prints it
+ * debug: an executable that reads the data from MPU9250 over i2c and prints it
  * ahrs_debug: an executable that reads the same data, calculates roll/pitch/heading and prints that
- * AHRS: a SuperCollider UGen plugin
-
+ * MPU: a SuperCollider UGen plugin
 
 ### to build:
 
@@ -14,18 +16,10 @@ This project will build:
     cmake -DCMAKE_BUILD_TYPE=Release ../
     make install
 
-
 ### to run:
 
     sudo ./build/apps/ahrs_debug/ahrs_debug
     sudo ./build/apps/debug/debug
-    
-
-
-### to NIME
-
-
-After installing, you can run  scripts/start_all.sh to start jackd and scsynth
 
 ### to build the debug version:
 
@@ -33,11 +27,3 @@ After installing, you can run  scripts/start_all.sh to start jackd and scsynth
     cd debug
     cmake -DCMAKE_BUILD_TYPE=Debug ../
     make install
-
-### Requirements
-
-    You should have wiringPi installed!
-
-    add this to your sudoers file so we can run gpio w/o root
-
-    %gpio ALL = NOPASSWD: /usr/local/bin/gpio
