@@ -9,7 +9,7 @@ void MPU9250::read() {
     // If intPin goes high, all data registers have new data
     const float *q;
   if (readByte(MPU9250_ADDRESS, INT_STATUS) & 0x01) {  // On interrupt, check if data ready interrupt
-      printf("data ready\n");
+      //printf("data ready\n");
     readAccelData();  // Read the x/y/z adc values
     readGyroData();  // Read the x/y/z adc values
     readMagData();  // Read the x/y/z adc values
@@ -31,6 +31,7 @@ void MPU9250::read() {
     
     // Calculate the magnetometer values in milliGauss
     // Include factory calibration per data sheet and user environmental corrections
+    printf("magRaw %i", mag.raw[0]);
     mag.x = mag.scale[0] * ((float)mag.raw[0]*mag.res*mag.calibration[0] - mag.bias[0]);  // get actual magnetometer value, this depends on scale being set
     mag.y = mag.scale[1] * ((float)mag.raw[1]*mag.res*mag.calibration[1] - mag.bias[1]);  
     mag.z = mag.scale[2] * ((float)mag.raw[2]*mag.res*mag.calibration[2] - mag.bias[2]);
@@ -62,12 +63,33 @@ void MPU9250::read() {
     orientation.roll  *= 180.0f / M_PI;
     
     //printf("rate: %fHz\t pitch: %f \t roll: %f \t yaw: %f\t magY: %f\n", sumCount / sum, pitch, roll, yaw, my);
+    printf("rate: %fHz\t accel: %f %f %f \t gyro: %f %f %f \t pitch: %f \t roll: %f \t yaw: %f\t mag: %f,%f,%f\n", 
+            sumCount / sum, accel.x, accel.y, accel.z, gyro.x, gyro.y, gyro.z, orientation.pitch, orientation.roll, orientation.yaw,
+            mag.x, mag.y, mag.z
+          );
 #ifdef DEBUG
     //FIXME
     //printf("rate: %fHz\t accel: %f %f %f \t gyro: %f %f %f \t pitch: %f \t roll: %f \t yaw: %f\t magY: %f\n", sumCount / sum, ax, ay, az, gx, gy, gz, pitch, roll, yaw, my);
 #endif
 }
 
+void MPU9250::read(mpu9250State_t &state) 
+{
+    read();
+    state.ax = accel.x;
+    state.ay = accel.y;
+    state.az = accel.z;
+    state.gx = gyro.x;
+    state.gy = gyro.y;
+    state.gz = gyro.z;
+    state.mx = mag.x;
+    state.my = mag.y;
+    state.mz = mag.z;
+    state.pitch = orientation.pitch;
+    state.roll = orientation.roll;
+    state.yaw = orientation.yaw;
+
+}
 
 void MPU9250::readAccelData()
 {
@@ -98,6 +120,7 @@ void MPU9250::readMagData()
   
   if (readByte(AK8963_ADDRESS, AK8963_ST1) & 0x01)
   {
+      cout << "Could read mag byte\n";
     // Read the six raw data and ST2 registers sequentially into data array
     readBytes(AK8963_ADDRESS, AK8963_XOUT_L, 7, &rawData[0]);
     uint8_t c = rawData[6]; // End data read by reading ST2 register
@@ -111,6 +134,10 @@ void MPU9250::readMagData()
       mag.raw[2] = ((int16_t)rawData[5] << 8) | rawData[4];
         
     }
+  }
+  else
+  {
+      cout << "Couldn't read mag byte\n";
   }
   
 
@@ -143,6 +170,9 @@ boolean MPU9250::init(uint8_t bus, uint8_t i2caddr) {
   _i2c_address = i2caddr;
   
   startMicros = micros();
+
+  //XXX temp fix before loading mag calibration
+  mag.scale[0] = mag.scale[1] = mag.scale[2] = 1;
   
   if(initI2C_RW(bus, i2caddr, 0) > 0)
       return false;
@@ -151,14 +181,13 @@ boolean MPU9250::init(uint8_t bus, uint8_t i2caddr) {
   
   if (c == 0x71) // WHO_AM_I should always be 0x71
   {
-    printf("MPU9250 is online...");
+    //printf("MPU9250 is online...");
 
     calculateResolutions();
 
     initMag();
     initAccelGyro();
 
-    //Do stuff
     
     return true;
   } 
@@ -178,20 +207,22 @@ void MPU9250::initMag()
   writeByte(MPU9250_ADDRESS, INT_PIN_CFG, 0x02);//Set bypass enabled
   
   writeByte(AK8963_ADDRESS, AK8963_CNTL, 0x00); // Power down magnetometer  
-  delay(10);
+  delay(100);
   writeByte(AK8963_ADDRESS, AK8963_CNTL, 0x0F); // Enter Fuse ROM access mode
-  delay(10);
+  delay(100);
   readBytes(AK8963_ADDRESS, AK8963_ASAX, 3, &rawData[0]);  // Read the x-, y-, and z-axis calibration values
   mag.calibration[0] =  (float)(rawData[0] - 128)/256. + 1.;   // Return x-axis sensitivity adjustment values, etc.
   mag.calibration[1] =  (float)(rawData[1] - 128)/256. + 1.;  
   mag.calibration[2] =  (float)(rawData[2] - 128)/256. + 1.; 
   writeByte(AK8963_ADDRESS, AK8963_CNTL, 0x00); // Power down magnetometer  
-  delay(10);
+  delay(100);
   // Configure the magnetometer for continuous read and highest resolution
   // set Mscale bit 4 to 1 (0) to enable 16 (14) bit resolution in CNTL register,
   // and enable continuous mode data acquisition Mmode (bits [3:0]), 0010 for 8 Hz and 0110 for 100 Hz sample rates
   writeByte(AK8963_ADDRESS, AK8963_CNTL, Mscale << 4 | Mmode); // Set magnetometer data resolution and sample ODR
-  delay(10);
+  delay(100);
+  writeByte(AK8963_ADDRESS, AK8963_CNTL, Mscale << 4 | Mmode); // Set magnetometer data resolution and sample ODR
+  delay(100);
 }
 
 void MPU9250::initAccelGyro()
@@ -259,7 +290,7 @@ void MPU9250::calibrateMag()
   int32_t mag_bias[3] = {0, 0, 0}, mag_scale[3] = {0, 0, 0};
   int16_t mag_max[3] = {-32767, -32767, -32767}, mag_min[3] = {32767, 32767, 32767}, mag_temp[3] = {0, 0, 0};
 
-  printf("Mag Calibration: Wave device in a figure eight until done!");
+  //printf("Mag Calibration: Wave device in a figure eight until done!");
   delay(4000);
   
     // shoot for ~fifteen seconds of mag data
@@ -296,7 +327,7 @@ void MPU9250::calibrateMag()
     mag.scale[1] = avg_rad/((float)mag_scale[1]);
     mag.scale[2] = avg_rad/((float)mag_scale[2]);
   
-    printf("Mag Calibration done!");
+    //printf("Mag Calibration done!");
 }
 
 // Function which accumulates gyro and accelerometer data after device
@@ -307,7 +338,7 @@ void MPU9250::calibrateAccelGyro()
   uint8_t data[12]; // data array to hold accelerometer and gyro x, y, z, data
   uint16_t ii, packet_count;
   int32_t gyro_bias[3]  = {0, 0, 0}, accel_bias[3] = {0, 0, 0};
-      printf("--test--\n");
+      //printf("--test--\n");
  
   // reset device
   // Write a one to bit 7 reset bit; toggle reset device
@@ -544,7 +575,8 @@ void MPU9250::writeByte(uint8_t address, uint8_t subAddress, uint8_t data)
     
     if(write(i2C_file, buf, 2) != 2)
     {
-        cout << "Failed to write register " << (int)address << " on MPU9250\n";
+        //cout << "Failed to write register " << (int)address << " on MPU9250\n";
+        printf("Failed to write register 0x%02x on MPU9250\n", address);
         return;
     }
   //Wire.beginTransmission(address);  // Initialize the Tx buffer
@@ -587,7 +619,7 @@ uint8_t MPU9250::readByte(uint8_t address, uint8_t subAddress)
     packets.msgs      = messages;
     packets.nmsgs     = 2;
     if(ioctl(i2C_file, I2C_RDWR, &packets) < 0) {
-        printf("Unable to send data\n");
+        //printf("Unable to send data\n");
         return 0;
     }
 

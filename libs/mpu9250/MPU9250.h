@@ -11,9 +11,10 @@
 #include <stdint.h>
 #include <unistd.h>
 #include <math.h>
+#include <thread>
 #include <I2c.h>
 
-#define delay(X) usleep(X*1000)
+#define delay(X) std::this_thread::sleep_for( std::chrono::milliseconds( X ) )
 typedef bool boolean;
 
 
@@ -203,6 +204,10 @@ typedef struct {
 
 } mpu9250Orientation_t;
 
+typedef struct  {
+    float ax, ay, az, gx, gy, gz, mx, my, mz, pitch, roll, yaw;
+} mpu9250State_t; 
+
 class MPU9250 : public I2c
 {
   private:
@@ -282,6 +287,7 @@ class MPU9250 : public I2c
   	boolean init(uint8_t bus = 1, uint8_t i2caddr = MPU9250_ADDRESS);
 
     void read();
+    void read(mpu9250State_t &state);
     void calibrateMag();
     void calibrateAccelGyro();
     void MPU9250SelfTest(float * destination);

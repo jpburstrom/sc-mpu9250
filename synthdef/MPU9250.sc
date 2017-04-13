@@ -17,7 +17,6 @@ MPU : MultiOutUGen {
         } {
             ^this.initOutputs(1, rate);
         }
-        ^this.initOutputs(2
     }
     *kr {
         arg channel = 0, mul = 1.0, add = 0;

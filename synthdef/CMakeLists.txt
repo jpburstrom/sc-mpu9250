@@ -1,5 +1,5 @@
 cmake_minimum_required (VERSION 2.8)
-set(PROJECT "SC_MPU9250")
+set(PROJECT "MPU")
 project (${PROJECT})
 
 include_directories(${SC_PATH}/include/plugin_interface)
@@ -71,5 +71,5 @@ if(MINGW)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mstackrealign")
 endif()
 
-add_library(${PROJECT} MODULE MPU9250_UGen.cpp)
+add_library(${PROJECT} MODULE MPU_UGen.cpp)
 target_link_libraries(${PROJECT} mpu9250 Debugging)
