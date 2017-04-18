@@ -184,7 +184,7 @@ typedef bool boolean;
 #define AK8963_ADDRESS  0x0C   // Address of magnetometer
 #endif // AD0
 
-#define DECLINATION 0.0
+#define DECLINATION 5.9834 //Stockholm, Sweden
 
 #define DEG2RAD M_PI / 180.0
 
