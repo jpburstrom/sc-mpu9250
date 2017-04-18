@@ -223,13 +223,21 @@ This should be right if x is up, z is forward
 #define MAG_D -mag.z
 
 typedef struct {
+    float aBias[3];
+    float gBias[3];
+    float mBias[3];
+    float mScale[3];
+} mpu9250Calibration_t;
+
+typedef struct {
     float x;
     float y;
     float z;
+    //Raw sensor data
    int16_t raw[3];
+    //Internal factory calibration
    float calibration[3];
-   float bias[3];
-   float scale[3];
+   //Resolution
    float res;
 
 } mpu9250Sensor_t;
@@ -317,6 +325,9 @@ class MPU9250 : public I2c
     mpu9250Sensor_t accel;
     mpu9250Sensor_t gyro;
     mpu9250Sensor_t mag;
+
+    mpu9250Calibration_t calibration;
+   
     float temperature;   // Stores the real internal chip temperature in Celsius
 
     // Pitch/Roll/Yaw
@@ -330,8 +341,8 @@ class MPU9250 : public I2c
     void read(mpu9250State_t &state);
     void calibrateMag();
     void calibrateAccelGyro();
-    void getCalibration(float * data);
-    void setCalibration(float * data);
+    void getCalibration(mpu9250Calibration_t &data);
+    void setCalibration(mpu9250Calibration_t data);
     void MPU9250SelfTest(float * destination);
     
     

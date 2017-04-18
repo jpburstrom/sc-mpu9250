@@ -16,9 +16,9 @@ void MPU9250::read() {
     readTempData(); //Temp data too
     
     // Now we'll calculate the accleration value into actual g's
-    accel.x = (float)accel.raw[0]*accel.res - accel.bias[0];  // get actual g value, this depends on scale being set
-    accel.y = (float)accel.raw[1]*accel.res - accel.bias[1];   
-    accel.z = (float)accel.raw[2]*accel.res - accel.bias[2];  
+    accel.x = (float)accel.raw[0]*accel.res - calibration.aBias[0];  // get actual g value, this depends on scale being set
+    accel.y = (float)accel.raw[1]*accel.res - calibration.aBias[1];   
+    accel.z = (float)accel.raw[2]*accel.res - calibration.aBias[2];  
  
     // Calculate the gyro value into actual degrees per second
     gyro.x = (float)gyro.raw[0]*gyro.res;  // get actual gyro value, this depends on scale being set
@@ -33,9 +33,9 @@ void MPU9250::read() {
     // Calculate the magnetometer values in milliGauss
     // Include factory calibration per data sheet and user environmental corrections
     //printf("magRaw %i", mag.raw[0]);
-    mag.x = mag.scale[0] * ((float)mag.raw[0]*mag.res*mag.calibration[0] - mag.bias[0]);  // get actual magnetometer value, this depends on scale being set
-    mag.y = mag.scale[1] * ((float)mag.raw[1]*mag.res*mag.calibration[1] - mag.bias[1]);  
-    mag.z = mag.scale[2] * ((float)mag.raw[2]*mag.res*mag.calibration[2] - mag.bias[2]);
+    mag.x = calibration.mScale[0] * ((float)mag.raw[0]*mag.res*mag.calibration[0] - calibration.mBias[0]);  // get actual magnetometer value, this depends on scale being set
+    mag.y = calibration.mScale[1] * ((float)mag.raw[1]*mag.res*mag.calibration[1] - calibration.mBias[1]);  
+    mag.z = calibration.mScale[2] * ((float)mag.raw[2]*mag.res*mag.calibration[2] - calibration.mBias[2]);
   }
 
   updateTime();
@@ -159,7 +159,7 @@ boolean MPU9250::init(uint8_t bus, uint8_t i2caddr) {
   startMicros = micros();
 
   //XXX temp fix before loading mag calibration
-  mag.scale[0] = mag.scale[1] = mag.scale[2] = 1;
+  calibration.mScale[0] = calibration.mScale[1] = calibration.mScale[2] = 1;
   
   if(initI2C_RW(bus, i2caddr, 0) > 0)
       return false;
@@ -302,26 +302,19 @@ void MPU9250::calibrateMag()
     if(Mmode == 0x06) delay(12);  // at 100 Hz ODR, new mag data is available every 10 ms
     }
 
+    for (int i = 0; i < 3; i++) {
+        mag_bias[i]  = (mag_max[i] + mag_min[i])/2;  // get average x mag bias in counts
+        calibration.mBias[i] = (float) mag_bias[i]*mag.res*mag.calibration[i];  // save mag biases in G for main program
+        // get soft iron correction estimate
+        mag_scale[i]  = (mag_max[i] - mag_min[i])/2;  // get average x axis max chord length in counts
+    }
     // Get hard iron correction
-    mag_bias[0]  = (mag_max[0] + mag_min[0])/2;  // get average x mag bias in counts
-    mag_bias[1]  = (mag_max[1] + mag_min[1])/2;  // get average y mag bias in counts
-    mag_bias[2]  = (mag_max[2] + mag_min[2])/2;  // get average z mag bias in counts
-    
-    mag.bias[0] = (float) mag_bias[0]*mag.res*mag.calibration[0];  // save mag biases in G for main program
-    mag.bias[1] = (float) mag_bias[1]*mag.res*mag.calibration[1];   
-    mag.bias[2] = (float) mag_bias[2]*mag.res*mag.calibration[2];  
-       
-    // Get soft iron correction estimate
-    mag_scale[0]  = (mag_max[0] - mag_min[0])/2;  // get average x axis max chord length in counts
-    mag_scale[1]  = (mag_max[1] - mag_min[1])/2;  // get average y axis max chord length in counts
-    mag_scale[2]  = (mag_max[2] - mag_min[2])/2;  // get average z axis max chord length in counts
-
     float avg_rad = mag_scale[0] + mag_scale[1] + mag_scale[2];
     avg_rad /= 3.0;
 
-    mag.scale[0] = avg_rad/((float)mag_scale[0]);
-    mag.scale[1] = avg_rad/((float)mag_scale[1]);
-    mag.scale[2] = avg_rad/((float)mag_scale[2]);
+    calibration.mScale[0] = avg_rad/((float)mag_scale[0]);
+    calibration.mScale[1] = avg_rad/((float)mag_scale[1]);
+    calibration.mScale[2] = avg_rad/((float)mag_scale[2]);
   
     //printf("Mag Calibration done!");
 }
@@ -421,9 +414,9 @@ void MPU9250::calibrateAccelGyro()
   
  
 // Output scaled gyro biases for display in the main program
-  gyro.bias[0] = (float) gyro_bias[0]/(float) gyrosensitivity;  
-  gyro.bias[1] = (float) gyro_bias[1]/(float) gyrosensitivity;
-  gyro.bias[2] = (float) gyro_bias[2]/(float) gyrosensitivity;
+  calibration.gBias[0] = (float) gyro_bias[0]/(float) gyrosensitivity;  
+  calibration.gBias[1] = (float) gyro_bias[1]/(float) gyrosensitivity;
+  calibration.gBias[2] = (float) gyro_bias[2]/(float) gyrosensitivity;
 
 // Construct the accelerometer biases for push to the hardware accelerometer bias registers. These registers contain
 // factory trim values which must be added to the calculated accelerometer biases; on boot up these registers will hold
@@ -475,20 +468,22 @@ void MPU9250::calibrateAccelGyro()
   writeByte(MPU9250_ADDRESS, ZA_OFFSET_L, data[5]);
 
 // Output scaled accelerometer biases for display in the main program
-   accel.bias[0] = (float)accel_bias[0]/(float)accelsensitivity; 
-   accel.bias[1] = (float)accel_bias[1]/(float)accelsensitivity;
-   accel.bias[2] = (float)accel_bias[2]/(float)accelsensitivity;
+   calibration.aBias[0] = (float)accel_bias[0]/(float)accelsensitivity; 
+   calibration.aBias[1] = (float)accel_bias[1]/(float)accelsensitivity;
+   calibration.aBias[2] = (float)accel_bias[2]/(float)accelsensitivity;
 }
 
 //Set internal calibration from array of floats
 //
-void MPU9250::setCalibration(float* data)
+void MPU9250::setCalibration(mpu9250Calibration_t data)
 {
+    calibration = data;
 }
 
 //Get internal calibration as array of floats
-void MPU9250::getCalibration(float* data)
+void MPU9250::getCalibration(mpu9250Calibration_t &data)
 {
+    data = calibration;
 }
 
    
