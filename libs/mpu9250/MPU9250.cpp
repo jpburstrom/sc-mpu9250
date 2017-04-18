@@ -13,6 +13,7 @@ void MPU9250::read() {
     readAccelData();  // Read the x/y/z adc values
     readGyroData();  // Read the x/y/z adc values
     readMagData();  // Read the x/y/z adc values
+    readTempData(); //Temp data too
     
     // Now we'll calculate the accleration value into actual g's
     accel.x = (float)accel.raw[0]*accel.res - accel.bias[0];  // get actual g value, this depends on scale being set
@@ -375,7 +376,8 @@ void MPU9250::calibrateAccelGyro()
  
   uint16_t  gyrosensitivity  = 131;   // = 131 LSB/degrees/sec
   uint16_t  accelsensitivity = 16384;  // = 16384 LSB/g
- 
+
+
   packet_count = 40;// How many sets of full gyro and accelerometer data for averaging
  
   for (ii = 0; ii < packet_count; ii++)
