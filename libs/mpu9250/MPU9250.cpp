@@ -25,11 +25,6 @@ void MPU9250::read() {
     gyro.y = (float)gyro.raw[1]*gyro.res;  
     gyro.z = (float)gyro.raw[2]*gyro.res;   
   
-
-    //magbias[0] = +470.;  // User environmental x-axis correction in milliGauss, should be automatically calculated
-    //magbias[1] = +120.;  // User environmental x-axis correction in milliGauss
-    //magbias[2] = +125.;  // User environmental x-axis correction in milliGauss
-    
     // Calculate the magnetometer values in milliGauss
     // Include factory calibration per data sheet and user environmental corrections
     //printf("magRaw %i", mag.raw[0]);
