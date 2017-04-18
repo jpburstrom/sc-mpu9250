@@ -40,36 +40,25 @@ void MPU9250::read() {
 
   updateTime();
   
-  // Sensors x (y)-axis of the accelerometer is aligned with the y (x)-axis of the magnetometer;
-  // the magnetometer z-axis (+ down) is opposite to z-axis (+ up) of accelerometer and gyro!
-  // We have to make some allowance for this orientationmismatch in feeding the output to the quaternion filter.
-  // For the MPU-9250, we have chosen a magnetic rotation that keeps the sensor forward along the x-axis just like
-  // in the LSM9DS0 sensor. This rotation can be modified to allow any convenient orientation convention.
-  // This is ok by aircraft orientation standards!  
-  // Pass gyro rate as rad/s
-//  MadgwickQuaternionUpdate(ax, ay, az, gx*PI/180.0f, gy*PI/180.0f, gz*PI/180.0f,  my,  mx, mz);
-  MahonyQuaternionUpdate(
-          accel.x, accel.y, accel.z, 
-          gyro.x*M_PI/180.0f, gyro.y*M_PI/180.0f, gyro.z*M_PI/180.0f, 
-          mag.y, mag.x, mag.z, deltat);
+  MadgwickQuaternionUpdate(ACCEL_N, ACCEL_E, ACCEL_D, GYRO_N, GYRO_E, GYRO_D,  MAG_N,  MAG_E, MAG_D, deltat);
   
   q = getQ();
+
+  float a12, a22, a31, a32, a33;
+  a12 =   2.0f * (q[1] * q[2] + q[0] * q[3]);
+  a22 =   q[0] * q[0] + q[1] * q[1] - q[2] * q[2] - q[3] * q[3];
+  a31 =   2.0f * (q[0] * q[1] + q[2] * q[3]);
+  a32 =   2.0f * (q[1] * q[3] - q[0] * q[2]);
+  a33 =   q[0] * q[0] - q[1] * q[1] - q[2] * q[2] + q[3] * q[3];
   
-  orientation.yaw   = atan2(2.0f * (q[1] * q[2] + q[0] * q[3]), q[0] * q[0] + q[1] * q[1] - q[2] * q[2] - q[3] * q[3]);   
-  orientation.pitch = -asin(2.0f * (q[1] * q[3] - q[0] * q[2]));
-    orientation.roll  = atan2(2.0f * (q[0] * q[1] + q[2] * q[3]), q[0] * q[0] - q[1] * q[1] - q[2] * q[2] + q[3] * q[3]);
-    orientation.pitch *= 180.0f / M_PI;
-    orientation.yaw   *= 180.0f / M_PI; 
-    //orientation.yaw   -= 13.8; // Declination at Danville, California is 13 degrees 48 minutes and 47 seconds on 2014-04-04
-    orientation.roll  *= 180.0f / M_PI;
-    
-    //printf("rate: %fHz\t pitch: %f \t roll: %f \t yaw: %f\t magY: %f\n", sumCount / sum, pitch, roll, yaw, my);
-    /*
-    printf("rate: %fHz\t accel: %f %f %f \t gyro: %f %f %f \t pitch: %f \t roll: %f \t yaw: %f\t mag: %f,%f,%f\n", 
-            sumCount / sum, accel.x, accel.y, accel.z, gyro.x, gyro.y, gyro.z, orientation.pitch, orientation.roll, orientation.yaw,
-            mag.x, mag.y, mag.z
-          );
-          */
+  orientation.pitch = -asin(a32);
+  orientation.roll = atan2(a31, a33);
+  orientation.yaw = atan2(a12, a22);
+  orientation.pitch *= 180.0 / M_PI;
+  orientation.yaw *= 180.0 / M_PI;
+  orientation.yaw += DECLINATION;
+  if (orientation.yaw < 0) orientation.yaw += 360.0;
+  orientation.roll *= 180.0f / M_PI;
 #ifdef DEBUG
     //FIXME
     //printf("rate: %fHz\t accel: %f %f %f \t gyro: %f %f %f \t pitch: %f \t roll: %f \t yaw: %f\t magY: %f\n", sumCount / sum, ax, ay, az, gx, gy, gz, pitch, roll, yaw, my);
@@ -295,7 +284,7 @@ void MPU9250::calibrateMag()
 {
   uint16_t ii = 0, sample_count = 0;
   int32_t mag_bias[3] = {0, 0, 0}, mag_scale[3] = {0, 0, 0};
-  int16_t mag_max[3] = {-32767, -32767, -32767}, mag_min[3] = {32767, 32767, 32767}, mag_temp[3] = {0, 0, 0};
+  int16_t mag_max[3] = {-32767, -32767, -32767}, mag_min[3] = {32767, 32767, 32767};
 
   //printf("Mag Calibration: Wave device in a figure eight until done!");
   delay(4000);
@@ -306,8 +295,8 @@ void MPU9250::calibrateMag()
    for(ii = 0; ii < sample_count; ii++) {
     readMagData();  // Read the mag data   
     for (int jj = 0; jj < 3; jj++) {
-      if(mag_temp[jj] > mag_max[jj]) mag_max[jj] = mag_temp[jj];
-      if(mag_temp[jj] < mag_min[jj]) mag_min[jj] = mag_temp[jj];
+      if(mag.raw[jj] > mag_max[jj]) mag_max[jj] = mag.raw[jj];
+      if(mag.raw[jj] < mag_min[jj]) mag_min[jj] = mag.raw[jj];
     }
     if(Mmode == 0x02) delay(135);  // at 8 Hz ODR, new mag data is available every 125 ms
     if(Mmode == 0x06) delay(12);  // at 100 Hz ODR, new mag data is available every 10 ms
@@ -418,6 +407,9 @@ void MPU9250::calibrateAccelGyro()
   data[3] = (-gyro_bias[1]/4)       & 0xFF;
   data[4] = (-gyro_bias[2]/4  >> 8) & 0xFF;
   data[5] = (-gyro_bias[2]/4)       & 0xFF;
+
+//XXX TMP
+
   
 // Push gyro biases to hardware registers
   writeByte(MPU9250_ADDRESS, XG_OFFSET_H, data[0]);
@@ -486,6 +478,17 @@ void MPU9250::calibrateAccelGyro()
    accel.bias[0] = (float)accel_bias[0]/(float)accelsensitivity; 
    accel.bias[1] = (float)accel_bias[1]/(float)accelsensitivity;
    accel.bias[2] = (float)accel_bias[2]/(float)accelsensitivity;
+}
+
+//Set internal calibration from array of floats
+//
+void MPU9250::setCalibration(float* data)
+{
+}
+
+//Get internal calibration as array of floats
+void MPU9250::getCalibration(float* data)
+{
 }
 
    

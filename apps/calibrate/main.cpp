@@ -87,12 +87,19 @@ int main(int argc, char** argv) {
     
     }
 
+    int count = 0;
+
     while (running) {
         mpu.read();
-        printf("\rAccel X: %.02f\t Accel Y: %.02f\t Accel Z: %.02f\t Pitch: %.02f\t Roll: %.02f\t Yaw: %.02f", 
-                mpu.accel.x, mpu.accel.y, mpu.accel.z, mpu.orientation.pitch, mpu.orientation.roll, mpu.orientation.yaw);
+        
+        if (count == 0) {
+            printf("\rAX: %.02f AY: %.02f AZ: %.02f\t P: %.02f R: %.02f Y: %.02f \t GX: %.02f GY: %.02f GZ: %.02f\t MX: %.02f MY: %.02f MZ: %.02f", 
+                    mpu.accel.x, mpu.accel.y, mpu.accel.z, mpu.orientation.pitch, mpu.orientation.roll, mpu.orientation.yaw,
+                    mpu.gyro.x, mpu.gyro.y, mpu.gyro.z, mpu.mag.x, mpu.mag.y, mpu.mag.z);
 
+        }
+        count = (count + 1) % 10;
         fflush(stdout);
-        usleep(10000);
+        usleep(2500); //400Hz
     }
 }

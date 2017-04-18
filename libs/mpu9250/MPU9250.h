@@ -184,6 +184,44 @@ typedef bool boolean;
 #define AK8963_ADDRESS  0x0C   // Address of magnetometer
 #endif // AD0
 
+#define DECLINATION 0.0
+
+#define DEG2RAD M_PI / 180.0
+
+// Sensors x (y)-axis of the accelerometer is aligned with the y (x)-axis of the magnetometer;
+// the magnetometer z-axis (+ down) is opposite to z-axis (+ up) of accelerometer and gyro!
+// We have to make some allowance for this orientationmismatch in feeding the output to the quaternion filter.
+// For the MPU-9250, we have chosen a magnetic rotation that keeps the sensor forward along the x-axis just like
+// in the LSM9DS0 sensor. This rotation can be modified to allow any convenient orientation convention.
+// This is ok by aircraft orientation standards!  
+// Pass gyro rate as rad/s
+//Redefine these to change orientation of sensors
+//Accel, Gyro and Mag NED (North, East, Down)
+
+
+/*
+This should be right if x is up, z is forward
+#define ACCEL_N -accel.z
+#define ACCEL_E -accel.y
+#define ACCEL_D -accel.x
+#define GYRO_N -gyro.z * DEG2RAD
+#define GYRO_E -gyro.y * DEG2RAD
+#define GYRO_D -gyro.x * DEG2RAD
+#define MAG_N mag.z
+#define MAG_E -mag.x
+#define MAG_D -mag.y
+*/
+
+#define ACCEL_N accel.x
+#define ACCEL_E accel.y
+#define ACCEL_D accel.z
+#define GYRO_N gyro.x * DEG2RAD
+#define GYRO_E gyro.y * DEG2RAD
+#define GYRO_D gyro.z * DEG2RAD
+#define MAG_N  mag.y
+#define MAG_E mag.x
+#define MAG_D -mag.z
+
 typedef struct {
     float x;
     float y;
@@ -292,6 +330,8 @@ class MPU9250 : public I2c
     void read(mpu9250State_t &state);
     void calibrateMag();
     void calibrateAccelGyro();
+    void getCalibration(float * data);
+    void setCalibration(float * data);
     void MPU9250SelfTest(float * destination);
     
     

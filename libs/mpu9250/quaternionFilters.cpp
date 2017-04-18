@@ -16,6 +16,7 @@
 #define Kp 2.0f * 5.0f
 #define Ki 0.0f
 
+//Larger value = faster
 static float GyroMeasError = M_PI * (40.0f / 180.0f);
 // gyroscope measurement drift in rad/s/s (start at 0.0 deg/s/s)
 static float GyroMeasDrift = M_PI * (0.0f  / 180.0f);
