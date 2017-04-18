@@ -1,7 +1,5 @@
 cmake_minimum_required(VERSION 2.8)
 
-project (Nime)
-
 set(CMAKE_POSITION_INDEPENDENT_CODE True)
 message(${CMAKE_CXX_FLAGS_RELEASE})
 
@@ -14,6 +12,7 @@ add_subdirectory(libs/mpu9250)
 add_subdirectory(libs/debugging)
 
 add_subdirectory(apps/debug)
+add_subdirectory(apps/calibrate)
 add_subdirectory(apps/ahrs_debug)
 
-add_subdirectory(synthdef)
+add_subdirectory(plugin)
