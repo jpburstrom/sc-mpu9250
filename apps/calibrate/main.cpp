@@ -42,7 +42,7 @@ int main(int argc, char** argv) {
     }
 
     if (warn) {
-        printf("WARNING: Some percentages seem to be a bit off.\n");
+        printf("WARN NG: Some percentages seem to be a bit off.\n");
     } else {
         printf("Seems ok.\n");
     }
@@ -53,7 +53,7 @@ int main(int argc, char** argv) {
         std::cerr <<  "sensor init failed!" << std::endl;
         return 1;
     } else {
-        cout << "Init ok\n";
+        cout << " nit ok\n";
     }
 
     if (!mpu.testRW()) {
@@ -63,41 +63,71 @@ int main(int argc, char** argv) {
         cout << "R/W OK\n";
     }
 
+    FILE * pFile;
+    pFile = fopen("calibration.bin", "rb");
+    if (pFile != NULL) {
+        mpu9250Calibration_t data;
+        fread(&data, sizeof(mpu9250Calibration_t), 1, pFile);
+        mpu.setCalibration(data);
+        fclose(pFile);
+        printf("Testing: Accel x bias = %f", mpu.calibration.aBias[0]);
+    }
 
 
-    //Calibrate accel + gyro
-    cout << "Calibrating Accel + Gyro\n";
-    mpu.calibrateAccelGyro();
-    printf("Accel bias: %f, %f, %f\n", mpu.accel.bias[0], mpu.accel.bias[1], mpu.accel.bias[2]) ;
-    printf("Gyro bias: %f, %f, %f\n", mpu.gyro.bias[0], mpu.gyro.bias[1], mpu.gyro.bias[2]) ;
-
-    mpu.init(); // reset various stuff
-
-
-    printf("Calibrate magnetometer? (y/n)");
+    printf("Calibrate Gyro/Accel? (y/n)");
     scanf("%c", &userInput);
 
     if (userInput == 'y') {
+        //Calibrate accel + gyro
+        cout << "Calibrating Accel + Gyro\n";
+        mpu.calibrateAccelGyro();
+        printf("Accel bias: %f, %f, %f\n", mpu.calibration.aBias[0], mpu.calibration.aBias[1], mpu.calibration.aBias[2]) ;
+        printf("Gyro bias: %f, %f, %f\n", mpu.calibration.gBias[0], mpu.calibration.gBias[1], mpu.calibration.gBias[2]) ;
+ 
+        mpu.init(); // reset various stuff
+    }
+ 
+
+    printf("Calibrate magnetometer? (y/n)");
+     scanf("%c", &userInput);
+
+
+     if (userInput == 'y') {
    
         cout << "Calibrating Magnetometer\n";
-        cout << "Wave device in a figure eight until done!\n";
+         cout << "Wave device in a figure eight until done!\n";
         mpu.calibrateMag();
-        printf("Mag bias: %f, %f, %f\n", mpu.mag.bias[0], mpu.mag.bias[1], mpu.mag.bias[2]) ;
-        printf("Mag scale: %f, %f, %f\n", mpu.mag.scale[0], mpu.mag.scale[1], mpu.mag.scale[2]) ;
+        printf("Mag bias: %f, %f, %f\n", mpu.calibration.mBias[0], mpu.calibration.mBias[1], mpu.calibration.mBias[2]) ;
+         printf("Mag scale: %f, %f, %f\n", mpu.calibration.mScale[0], mpu.calibration.mScale[1], mpu.calibration.mScale[2]) ;
     
     }
-
+ 
+    printf("Save calibration? (y/n)");
+    scanf("%c", &userInput);
+ 
+    if (userInput == 'y') {
+        pFile = fopen("calibration.bin", "wb");
+         if (pFile != NULL) {
+            mpu9250Calibration_t data;
+            mpu.getCalibration(data);
+             fwrite(&data, sizeof(mpu9250Calibration_t), 1, pFile);
+            fclose(pFile);
+         }
+         
+    }
+ 
+ 
     int count = 0;
 
-    while (running) {
+      while (running) {
         mpu.read();
-        
-        if (count == 0) {
-            printf("\rAX: %.02f AY: %.02f AZ: %.02f\t P: %.02f R: %.02f Y: %.02f \t GX: %.02f GY: %.02f GZ: %.02f\t MX: %.02f MY: %.02f MZ: %.02f", 
-                    mpu.accel.x, mpu.accel.y, mpu.accel.z, mpu.orientation.pitch, mpu.orientation.roll, mpu.orientation.yaw,
+             
+             if (count == 0) {
+             printf("\rAX: %.02f AY: %.02f AZ: %.02f\t P: %.02f R: %.02f Y: %.02f \t GX: %.02f GY: %.02f GZ: %.02f\t MX: %.02f MY: %.02f MZ: %.02f", 
+                     mpu.accel.x, mpu.accel.y, mpu.accel.z, mpu.orientation.pitch, mpu.orientation.roll, mpu.orientation.yaw,
                     mpu.gyro.x, mpu.gyro.y, mpu.gyro.z, mpu.mag.x, mpu.mag.y, mpu.mag.z);
-
-        }
+ 
+                }
         count = (count + 1) % 10;
         fflush(stdout);
         usleep(2500); //400Hz
