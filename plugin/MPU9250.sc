@@ -58,4 +58,23 @@ MPU : MultiOutUGen {
         arg mul = 1.0, add = 0;
         ^this.kr(6, mul, add);
     }
+
+    *calibrateAccelGyro { |server|
+        (server ? Server.default).sendMsg(\cmd, \mpuCmd, 1);
+    }
+
+    *calibrateMag { |server|
+        (server ? Server.default).sendMsg(\cmd, \mpuCmd, 2);
+    }
+
+    *saveCalibration { |path, server|
+        //No error checking here -- server might be remote
+        (server ? Server.default).sendMsg(\cmd, \mpuCmd, 3, path);
+    }
+
+    *loadCalibration { |path, server|
+        //No error checking here -- server might be remote
+        (server ? Server.default).sendMsg(\cmd, \mpuCmd, 4, path);
+    }
+
 }
