@@ -312,6 +312,8 @@ void MPU9250::calibrateMag()
     calibration.mScale[2] = avg_rad/((float)mag_scale[2]);
   
     //printf("Mag Calibration done!");
+
+    initMag();
 }
 
 // Function which accumulates gyro and accelerometer data after device
@@ -466,6 +468,9 @@ void MPU9250::calibrateAccelGyro()
    calibration.aBias[0] = (float)accel_bias[0]/(float)accelsensitivity; 
    calibration.aBias[1] = (float)accel_bias[1]/(float)accelsensitivity;
    calibration.aBias[2] = (float)accel_bias[2]/(float)accelsensitivity;
+
+   //Init 
+   initAccelGyro();
 }
 
 //Set internal calibration from array of floats
