@@ -1,4 +1,4 @@
-#sc-mpu9250
+# sc-mpu9250
 
 Supercollider plugin to read data from InvenSense MPU9250 over i2c.
 
