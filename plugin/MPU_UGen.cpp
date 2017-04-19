@@ -12,7 +12,7 @@
 
 //Read interval
 #define INTERVAL 2.5
-#define IDLE_INTERVAL 100;
+#define IDLE_INTERVAL 100
 
 struct MPU : public Unit {
     //Outputs 3 values
@@ -260,7 +260,7 @@ void *gstate_update_func(void *param) {
         while ( currentTask.load( std::memory_order_relaxed ) != TASK_STOP ) {
             while ( currentTask.load( std::memory_order_relaxed ) == TASK_RUN ) {
                 mpu.read(gData);
-                std::this_thread::sleep_for( std::chrono::milliseconds( INTERVAL ) );
+                std::this_thread::sleep_for( std::chrono::duration<float, std::milli>(INTERVAL)  );
             }
             while ( (currentTask.load( std::memory_order_relaxed ) & TASK_CMD) == TASK_CMD  ) {
                 std::this_thread::sleep_for( std::chrono::milliseconds( IDLE_INTERVAL ) );
