@@ -11,7 +11,8 @@
 //
 
 //Read interval
-#define INTERVAL 150
+#define INTERVAL 2.5
+#define IDLE_INTERVAL 100;
 
 struct MPU : public Unit {
     //Outputs 3 values
@@ -143,16 +144,17 @@ bool cmdStage2(World* world, void* inUserData) {
     switch ( currentTask.load( std::memory_order_relaxed ) ) {
         case TASK_CALIBRATE_ACCEL_GYRO:
 
-            printf("Calibrating Accelerometer & Gyro\n");
+            printf("MPU: Calibrating Accelerometer & Gyro\n");
             
             mpu.calibrateAccelGyro();
+            currentTask = TASK_RUN;
             //TODO: print calibration stats
             break;
         
         case TASK_CALIBRATE_MAG:
 
-            printf("Calibrating Magnetometer\n");
-            printf("Wave device in a figure eight until done!\n");
+            printf("MPU: Calibrating Magnetometer\n");
+            printf("MPU: Wave device in a figure eight until done!\n");
 
             mpu.calibrateMag();
             //TODO: print calibration stats
@@ -160,28 +162,25 @@ bool cmdStage2(World* world, void* inUserData) {
             break;
 
         case TASK_SAVE:
-            printf("saving...\n");
             data->fp = fopen(data->filename, "wb");
             if (data->fp != NULL) {
                 mpu.getCalibration(data->calData);
                 fwrite(&(data->calData), sizeof(mpu9250Calibration_t), 1, data->fp);
                 fclose(data->fp);
             } else {
-                printf("Couldn't open file for writing\n");
+                printf("MPU: Couldn't open file for writing\n");
             }
             currentTask = TASK_RUN;
             break;
 
         case TASK_LOAD:
-
-            printf("loading...\n");
             data->fp = fopen(data->filename, "rb");
             if (data->fp != NULL) {
                 fread(&(data->calData), sizeof(mpu9250Calibration_t), 1, data->fp);
                 fclose(data->fp);
                 mpu.setCalibration(data->calData);
             } else {
-                printf("Couldn't open file for reading\n");
+                printf("MPU: Couldn't open file for reading\n");
             }
             currentTask = TASK_RUN;
             break;
@@ -259,13 +258,12 @@ void mpuCmdFunc(World *inWorld, void* inUserData, struct sc_msg_iter *args, void
 void *gstate_update_func(void *param) {
     if ( mpu.init() ) {
         while ( currentTask.load( std::memory_order_relaxed ) != TASK_STOP ) {
-            //This
             while ( currentTask.load( std::memory_order_relaxed ) == TASK_RUN ) {
                 mpu.read(gData);
                 std::this_thread::sleep_for( std::chrono::milliseconds( INTERVAL ) );
             }
             while ( (currentTask.load( std::memory_order_relaxed ) & TASK_CMD) == TASK_CMD  ) {
-                std::this_thread::sleep_for( std::chrono::milliseconds( 100 ) );
+                std::this_thread::sleep_for( std::chrono::milliseconds( IDLE_INTERVAL ) );
             }
             
         }
