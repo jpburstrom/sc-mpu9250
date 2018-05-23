@@ -1,0 +1,77 @@
+TITLE:: MPU
+summary:: Read data from InvenSense MPU9250 over i2c.
+categories:: UGens > BELA
+related:: Classes/AnalogIn, Classes/DigitalIn
+
+DESCRIPTION::
+
+An UGen to read data from the InvenSense MPU9250 over i2c on the BELA board.
+
+NOTE::
+This UGen only works on BELA.
+::
+
+CLASSMETHODS::
+
+METHOD:: pitchKr
+Get rotation around the side-to-side axis.
+
+WARNING:: Note that the value might drift over time, depending on the magnetometer calibration and bugs in code. ::
+
+METHOD:: rollKr
+Get rotation around the front-to-back axis.
+
+WARNING:: Note that the value might drift over time, depending on the magnetometer calibration and bugs in code. ::
+
+METHOD:: accelKr
+Get accelerometer values (code::[x, y, z]::).
+
+METHOD:: magKr
+Get magnetometer values (code::[x, y, z]::).
+
+METHOD:: yawKr
+Get rotation around the vertical axis.
+
+WARNING:: Note that the value might drift over time, depending on the magnetometer calibration and bugs in code. ::
+
+METHOD:: gyroKr
+Get angular velocity values (code::[x, y, z]::).
+
+METHOD:: orientationKr
+Get pitch, roll, and yaw as a three-item array.
+
+WARNING:: Note that the values might drift over time, depending on the magnetometer calibration and bugs in code. ::
+
+METHOD:: calibrateAccelGyro
+Calibrate accelerometer and gyro sensor, offsetting accelerometer values from current position.
+
+METHOD:: calibrateMag
+Calibrate magnetometer.
+
+code::
+//Prepare for waving the sensor in a figure eight, then evaluate:
+MPU.calibrateMag;
+//Wave until calibration is done, around 15-20 seconds. Server output will tell you when.
+::
+
+METHOD:: saveCalibration
+
+Save current calibration to a file, to use for later. Path defaults to code::Platform.userConfigDir +/+ "mpuCalibration.bin"::.
+
+
+METHOD:: loadCalibration
+
+Load a previously saved calibration file. Path defaults to code::Platform.userConfigDir +/+ "mpuCalibration.bin"::.
+
+
+
+
+
+EXAMPLES::
+
+code::
+//X, Y and Z controlling three oscillators
+x = { Mix(SinOsc.ar(MPU.accelKr.linlin(0, 1, 220, 440) * 0.1 ) ) }.play
+
+x.free;
+::
