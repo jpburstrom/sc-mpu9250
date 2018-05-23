@@ -68,11 +68,13 @@ MPU : MultiOutUGen {
     }
 
     *saveCalibration { |path, server|
+        path = path ?? { Platform.userConfigDir +/+ "mpuCalibration.bin" };
         //No error checking here -- server might be remote
         (server ? Server.default).sendMsg(\cmd, \mpuCmd, 3, path);
     }
 
     *loadCalibration { |path, server|
+        path = path ?? { Platform.userConfigDir +/+ "mpuCalibration.bin" };
         //No error checking here -- server might be remote
         (server ? Server.default).sendMsg(\cmd, \mpuCmd, 4, path);
     }
