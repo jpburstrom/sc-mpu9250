@@ -58,12 +58,13 @@ METHOD:: saveCalibration
 
 Save current calibration to a file, to use for later. Path defaults to code::Platform.userConfigDir +/+ "mpuCalibration.bin"::.
 
+NOTE:: On the Bela board, default path is code::"/root/.config/SuperCollider/mpuCalibration.bin"::. The server needs to be booted.
 
 METHOD:: loadCalibration
 
 Load a previously saved calibration file. Path defaults to code::Platform.userConfigDir +/+ "mpuCalibration.bin"::.
 
-
+NOTE:: On the Bela board, default path is code::"/root/.config/SuperCollider/mpuCalibration.bin"::. The server needs to be booted.
 
 
 
