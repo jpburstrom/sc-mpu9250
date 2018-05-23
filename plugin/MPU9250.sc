@@ -1,23 +1,14 @@
 MPU : MultiOutUGen {
-    init { arg ... args; 
-        inputs = args;
-        /*
-        Channels:
-        0: Accel
-        1: Gyro
-        2: Mag
-        3: Orientation (pitch, roll, yaw)
-        4: Pitch
-        5: Roll
-        6: Yaw
-        */
-        if (args[0] < 4) {
-            //Output 3 values
-            ^this.initOutputs(3, rate);
-        } {
-            ^this.initOutputs(1, rate);
-        }
-    }
+    /*
+    Channels:
+    0: Accel
+    1: Gyro
+    2: Mag
+    3: Orientation (pitch, roll, yaw)
+    4: Pitch
+    5: Roll
+    6: Yaw
+    */
     *kr {
         arg channel = 0, mul = 1.0, add = 0;
 
@@ -68,13 +59,13 @@ MPU : MultiOutUGen {
     }
 
     *saveCalibration { |path, server|
-        path = path ?? { Platform.userConfigDir +/+ "mpuCalibration.bin" };
+        path = path ?? { Platform.userConfigDir +/+ "mpuCalibration.bin" };
         //No error checking here -- server might be remote
         (server ? Server.default).sendMsg(\cmd, \mpuCmd, 3, path);
     }
 
     *loadCalibration { |path, server|
-        path = path ?? { Platform.userConfigDir +/+ "mpuCalibration.bin" };
+        path = path ?? { Platform.userConfigDir +/+ "mpuCalibration.bin" };
         //No error checking here -- server might be remote
         (server ? Server.default).sendMsg(\cmd, \mpuCmd, 4, path);
     }
