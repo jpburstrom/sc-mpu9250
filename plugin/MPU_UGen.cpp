@@ -86,7 +86,7 @@ void MPU_Ctor(MPU *unit) {
 
 void MPU_next_k(MPU *unit, int numSamples) {
 
-    float value[3];
+    float value[3] = {0,0,0};
     int outputs = unit->outputs;
 
     if (currentTask == TASK_RUN) {
@@ -122,8 +122,6 @@ void MPU_next_k(MPU *unit, int numSamples) {
                 value[2] = gData.az;
                 break;
         }
-    } else {
-        value[0] = value[1] = value[2] = 0;
     }
 
     for (int i = 0; i < numSamples ; i++) {
