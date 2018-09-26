@@ -74,8 +74,8 @@ int main(int argc, char** argv) {
     }
 
 
-    printf("Calibrate Gyro/Accel? (y/n)");
-    scanf("%c", &userInput);
+    printf("Calibrate Gyro/Accel? (y/N)");
+    scanf(" %c", &userInput);
 
     if (userInput == 'y') {
         //Calibrate accel + gyro
@@ -88,8 +88,8 @@ int main(int argc, char** argv) {
     }
 
 
-    printf("Calibrate magnetometer? (y/n)");
-    scanf("%c", &userInput);
+    printf("Calibrate magnetometer? (y/N)");
+    scanf(" %c", &userInput);
 
 
     if (userInput == 'y') {
@@ -102,8 +102,8 @@ int main(int argc, char** argv) {
 
     }
 
-    printf("Save calibration? (y/n)");
-    scanf("%c", &userInput);
+    printf("Save calibration? (y/N)");
+    scanf(" %c", &userInput);
 
     if (userInput == 'y') {
         pFile = fopen("calibration.bin", "wb");
